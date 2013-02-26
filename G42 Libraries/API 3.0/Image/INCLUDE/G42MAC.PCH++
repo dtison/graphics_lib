@@ -1,0 +1,1 @@
+#pragma precompile_target "G42MAC"#include <PP_DebugHeaders.h>/*  Common stuff  */#include "gtools.h"#include "ggeomtry.h"/*  Image stuff  */#include "gidata.h"
