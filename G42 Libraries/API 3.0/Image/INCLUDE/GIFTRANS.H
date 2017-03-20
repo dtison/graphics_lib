@@ -1,8 +1,6 @@
 #if ! defined (GIFSHARP_H)
 #define GIFSHARP_H
-
 #include "gifilter.h"
-
 class G42Transparency : public G42ImageFilter
 {
 public:
@@ -17,14 +15,9 @@ public:
 								G42PathComponent *);
 	virtual 				G42ImageFilter * MakeCopy(void) const;
 protected:
-
 	void					HandleFilter (void);
 	void					ProcessFrame (void);
-
 	G42Color				TransparentColor;
 	bool					Transparent;
 };
-
-
-
 #endif

@@ -1,20 +1,16 @@
 #include "gdde.h"
-
 extern G42DDE * GlobalDDE;
-
 HDDEDATA CALLBACK DDE_CB(UINT type, UINT fmt, HCONV hconv, HSZ hsz1,
 	HSZ hsz2, HDDEDATA hData, DWORD dwData1, DWORD dwData2)
 {
 	if (!GlobalDDE)
 		return(0);
-
 	switch (type)
 	{
 		case XTYP_POKE:
 		{
 		char filename[2048];
 		char topic[128];
-
 			if (hsz1)
 			{
 				DdeQueryString(GlobalDDE->GetInst(), hsz1, topic, 128, CP_WINANSI);
@@ -34,7 +30,6 @@ HDDEDATA CALLBACK DDE_CB(UINT type, UINT fmt, HCONV hconv, HSZ hsz1,
 		case XTYP_CONNECT:
 		{
 			char who[20], what[20];
-
 			if (hsz1 && hsz2)
 			{
 				*who = *what = '\0';
@@ -63,7 +58,6 @@ HDDEDATA CALLBACK DDE_CB(UINT type, UINT fmt, HCONV hconv, HSZ hsz1,
 	}
 	return (NULL);
 }
-
 G42DDE::G42DDE(void)
 	: DdeInst(0L), Valid(false), Sending(false)
 {
@@ -77,7 +71,6 @@ G42DDE::G42DDE(void)
 		return;
 	Valid = true;
 }
-
 G42DDE::~G42DDE(void)
 {
 	if (ThisApp)
@@ -85,37 +78,31 @@ G42DDE::~G42DDE(void)
 	if (DdeInst)
 		DdeUninitialize(DdeInst);
 }
-
 bool
 G42DDE::PingRimShot(void)
 {
 	HSZ topic = DdeCreateStringHandle(DdeInst, "G42_Ping", CP_WINANSI);
 	if (!topic)
 		return false;
-
 	Sending = true;
 	HCONV rimshot_con = DdeConnect(DdeInst, ThisApp, topic, NULL);
-
 	if (!rimshot_con)
 	{
 		DdeFreeStringHandle(DdeInst, topic);
 		Sending = false;
 		return false;
 	}
-
 	DdeDisconnect(rimshot_con);
 	DdeFreeStringHandle(DdeInst, topic);
 	Sending = false;
 	return true;
 }
-
 bool
 G42DDE::OpenFiles(const char * buffer)
 {
 	HSZ topic = DdeCreateStringHandle(DdeInst, "G42_OpenFiles", CP_WINANSI);
 	if (!topic)
 		return false;
-
 	Sending = true;
 	HCONV rimshot_con = DdeConnect(DdeInst, ThisApp, topic, NULL);
 	if (!rimshot_con)
@@ -124,23 +111,17 @@ G42DDE::OpenFiles(const char * buffer)
 		Sending = false;
 		return false;
 	}
-
 	HSZ item = DdeCreateStringHandle(DdeInst, buffer, CP_WINANSI);
-
 	HDDEDATA result = DdeClientTransaction(NULL, 0, rimshot_con, item, CF_TEXT,
 			XTYP_POKE, 1000, NULL);
-
 	bool retval;
 	if (result)
 		retval = true;
 	else
 		retval = false;
 	DdeFreeStringHandle(DdeInst, item);
-
 	DdeDisconnect(rimshot_con);
 	DdeFreeStringHandle(DdeInst, topic);
 	Sending = false;
 	return retval;
 }
-
-

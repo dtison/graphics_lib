@@ -1,20 +1,16 @@
 //  gicpaint.h - G42ImagePaintController (Mouse Key Controller that handles
 //					painting)
-
 #if !defined(GICPAINT_H)
 #define GICPAINT_H
-
 #include "gtools.h"
 #include "gicmk.h"
 #include "giobgraf.h"
-
 class G42ImagePaintController : public G42MouseKeyController
 {
 public:
 	// constructor and descructor
 						G42ImagePaintController(void);
 	virtual 			~G42ImagePaintController(void);
-
 	// member functions
 	virtual void		Draw (G42DrawLocation location = 0);	// Draws private UI
 	virtual bool		ProcessMessage(G42MouseKeyMessage * message);
@@ -24,7 +20,6 @@ public:
 	virtual bool		IdleAction (void);
 	virtual void		Clear(void);
 	virtual void		ResetDrawState(void);
-
 	void				PutAreaDown(void);
 	void				SelectArea(const G42Rect & area);
 	void				DeleteArea(void);
@@ -32,12 +27,10 @@ public:
 							{ return AreaSelected; }
 	const G42Rect &		GetSelectedRect(void) const
 							{ return ActiveObject->GetBounds(); }
-
 	enum G42Shape { Rectangle, Polygon, Ellipse, Freehand, Text }; // more to be added later
 	void SetShape (G42Shape shape);
 	G42Shape GetShape (void) const
 		{ return Shape; }
-
 private:
 	// Instance variables
 	G42Ptr<G42GrafObject>
@@ -49,7 +42,6 @@ private:
 	G42Point			LastMouseMove;
 	G42Point			OriginalUpperLeft; // to see if user moved area
 	G42Shape			Shape; // shape to select
-
 	void						AdjustCursor (G42Point & point);
 	/*  Mouse & Keyboard Messages  */
 	bool 						HandleMouseMessage (void);
@@ -69,5 +61,4 @@ private:
 	G42GrafObject *		CreateShape(void);
 	void						Paint(void);
 };
-
 #endif // GICPAINT_H

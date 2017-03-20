@@ -1,1 +1,2255 @@
-//  giobtext.h - G42TextObject#include "giobtext.h"#include "gidsetup.h"G42TextObject::G42TextObject (G42AreaController *acontroller,	G42MouseKeyController *mcontroller):	G42QuadObject (acontroller, mcontroller), NumText(0),	#ifdef MSWIN	Font(0),	#endif	Start(0, 0),	NumAttributes(0),	NumParagraph(0),	ParagraphStart(0),	WrapWidth(0),	WrapHeight(0){ }G42TextObject::~G42TextObject(void){	#ifdef MSWIN	if (Font)	{		DeleteObject(Font);		Font = 0;	}	#endif}/*  Draws private UI  */voidG42TextObject::DrawGrafObject (G42DrawLocation location){	DrawRectangle (Rectangle, location);	if (!Defined || !NumText)		return;	#ifdef MSWIN	G42Rect viewport = AreaController->GetDisplay()->GetViewport();	G42DrawLocationVerifier dc(location,		AreaController->GetSurfaceController()->GetSurface(),		AreaController->GetSurfaceController()->GetWindowsPalette());	G42Rect rect = Rectangle;	Display->GetScaleTranslate().Convert(rect);	SetStart(G42Point(rect.Left - viewport.Left,		rect.Top - viewport.Top));	SetWrapWidth(rect.GetWidth());	SetWrapHeight(rect.GetHeight());	DrawText(dc);	DrawCursor(dc);	#endif}G42Region *G42TextObject::CreateObjectRegion (void){#if 0	/*  TODO:  What about mask parameter?  */	/*  Normalize Bounds to 0, 0 */	G42Rect rect = Bounds.OffsetBy (-Bounds.Left, -Bounds.Top);	G42Region * region = new G42Region (rect, G42Region::Rectangle);	G42ThrowIfNull (region);	return region;#else	return 0;#endif}voidG42TextObject::KeyDown (G42KeyDown * message){	if (!Defined)		return;	if (message->Key == G42LeftArrow)	{		DrawCursor();		MoveInsertLeft();		DrawCursor();	}	else if (message->Key == G42RightArrow)	{		DrawCursor();		MoveInsertRight();		DrawCursor();	}	else if (message->Key >= ' ' && message->Key < 0x127)	{		char c = (char)message->Key;		AddText(&c, 1);//		TextArray[NumText++] = (char)message->Key;//		TextArray[NumText] = '\0';		Draw();	}	else if (message->Key == '\n')	{		NextParagraph();		Draw();	}	else	{		G42QuadObject::KeyDown(message);	}}voidG42TextObject::UpdateBounds (bool final){	Bounds = Rectangle;	Origin.Set(Rectangle.Left, Rectangle.Top);	ResponseBounds = Bounds.InflatedBy (G42GrabberSize, G42GrabberSize);	if (final)	{		PlaceGrabbers();	}}voidG42TextObject::MoveInsertLeft(void){	if (InsertIndex)	{		InsertIndex--;	}}voidG42TextObject::MoveInsertRight(void){	if (InsertIndex < NumText)	{		InsertIndex++;	}}voidG42TextObject::CheckTextArray(intf length){	if (!TextArray || length >= MaxText)	{		intf new_length = length + 256;		char * new_text = new char [new_length];		G42ThrowIfNull(new_text);		if (TextArray && NumText > 0)		{			memcpy(new_text, TextArray, NumText);		}		TextArray = new_text;	}}voidG42TextObject::AddText(const char * text, intf num){	if (NumParagraph == 0)		NextParagraph();	CheckTextArray(NumText + num);	if (InsertIndex < NumText)	{		for (intf i = NumText - 1; i >= InsertIndex; i--)		{			TextArray[i + num] = TextArray[i];		}	}	memcpy(TextArray + NumText, text, num);	NumText += num;}voidG42TextObject::NextParagraph(void){	if (!NumParagraph)	{		ParagraphStart = NumAttributes;	}	ParagraphAttribute[NumParagraph] = NumAttributes;	ParagraphArray[NumParagraph++] = NumText;}voidG42TextObject::SetStart(const G42Point & start){	Start = start;}voidG42TextObject::SetFontName(const char * name){	G42BaseAttribute * base = new G42FontNameAttribute(name, NumText);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::SetFontSize(intf size){	G42BaseAttribute * base = new G42FontSizeAttribute(size, NumText);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::SetBold(bool state){	G42BaseAttribute * base = new G42BoldAttribute(state, NumText);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::SetItalic(bool state){	G42BaseAttribute * base = new G42ItalicAttribute(state, NumText);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::SetColor(const G42Color & color){	G42BaseAttribute * base = new G42ColorAttribute(color, NumText);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::SetUnderline(bool state){	G42BaseAttribute * base = new G42UnderlineAttribute(state, NumText);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::SetLineSpacing(intf pixels, G42LineSpacing mode){	G42BaseAttribute * base = new G42LineSpacingAttribute(pixels, mode);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::SetParagraphSpacing(intf pixels){	G42BaseAttribute * base = new G42ParagraphSpacingAttribute(pixels, NumText);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::SetTabSpacing(intf pixels){	G42BaseAttribute * base = new G42TabSpacingAttribute(pixels, NumText);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::SetFirstIndent(intf pixels){	G42BaseAttribute * base = new G42FirstIndentAttribute(pixels, NumText);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::SetLeftIndent(intf pixels){	G42BaseAttribute * base = new G42LeftIndentAttribute(pixels, NumText);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::SetRightIndent(intf pixels){	G42BaseAttribute * base = new G42RightIndentAttribute(pixels, NumText);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::SetHorizontalAlignment(G42AlignHoriz state){	G42BaseAttribute * base = new G42HorizontalAlignmentAttribute(state, NumText);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::SetVerticalAlignment(G42AlignVert state){	G42BaseAttribute * base = new G42VerticalAlignmentAttribute(state, NumText);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::AddBullet(){	if (!NumParagraph)	{		NextParagraph();	}	G42BaseAttribute * base = new G42BulletAttribute(0, false, false, NumText);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::AddBullet(intf bullet){	if (!NumParagraph)	{		NextParagraph();	}	G42BaseAttribute * base = new G42BulletAttribute(bullet, false, true,		NumText);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::AddIndentBullet(){	if (!NumParagraph)	{		NextParagraph();	}	G42BaseAttribute * base = new G42BulletAttribute(0, true, false, NumText);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::AddIndentBullet(intf bullet){	if (!NumParagraph)	{		NextParagraph();	}	G42BaseAttribute * base = new G42BulletAttribute(bullet, true, true,		NumText);	G42ThrowIfNull(base);	AttributeArray[NumAttributes++] = base;}voidG42TextObject::SetWrapWidth(intf width){	WrapWidth = width;}voidG42TextObject::SetNoWrap(void){	WrapWidth = 0;}voidG42TextObject::SetWrapHeight(intf pixels){	WrapHeight = pixels;}voidG42TextObject::HandleAttribute(G42BaseAttribute & attribute){	attribute.ChangeText(Current);}voidG42TextObject::ResetState(void){	if (Font)	{		DeleteObject(Font);		Font = 0;	}	Current.NeedFont = true;	Current.Name = "MS Sans Serf";	Current.Bold = false;	Current.Italic = false;	Current.Underline = false;	Current.Size = 12;	Current.Color = G42Color(0, 0, 0);	Current.TabSpacing = 5;	Current.LeftIndent = 0;	Current.RightIndent = 0;	Current.FirstIndent = 0;	Current.HorizontalAlignment = AlignLeft;	Current.VerticalAlignment = AlignTop;	Current.LineSpacing = 0;	Current.LineSpacingMode = LineSpacingIncremental;	Current.ParagraphSpacing = 0;}voidG42TextObject::SaveState(void){	Saved = Current;}voidG42TextObject::RestoreState(void){	Current = Saved;	Current.NeedFont = true;}voidG42TextObject::SetFont(void){  if (!Current.NeedFont)		return;	#ifdef MSWIN	if (Font)		DeleteObject(Font);	LOGFONT font_struct;	memset(&font_struct, 0, sizeof (LOGFONT));	font_struct.lfHeight = Current.Size;	font_struct.lfWeight = (Current.Bold ? 700 : 400);	font_struct.lfItalic = Current.Italic;	font_struct.lfUnderline = Current.Underline;	font_struct.lfCharSet = DEFAULT_CHARSET;	font_struct.lfOutPrecision = OUT_DEFAULT_PRECIS;	font_struct.lfClipPrecision = CLIP_DEFAULT_PRECIS;	font_struct.lfQuality = DEFAULT_QUALITY;	font_struct.lfPitchAndFamily = FF_DONTCARE;	if (Current.Name)		strcpy(font_struct.lfFaceName, Current.Name);	else		font_struct.lfFaceName[0] = '\0';	Font = CreateFontIndirect(&font_struct);	#endif}intfG42TextObject::GetAscent(G42DrawLocation location){#ifdef MSWIN	if (Font)	{		TEXTMETRIC metrics;		HFONT old_font = (HFONT)SelectObject(location, Font);		GetTextMetrics(location, &metrics);		SelectObject(location, old_font);		return metrics.tmAscent;	}#endif	return 0;}intfG42TextObject::GetDescent(G42DrawLocation location){#ifdef MSWIN	if (Font)	{		TEXTMETRIC metrics;		HFONT old_font = (HFONT)SelectObject(location, Font);		GetTextMetrics(location, &metrics);		SelectObject(location, old_font);		return metrics.tmDescent;	}#endif	return 0;}intfG42TextObject::GetLeading(G42DrawLocation location){#ifdef MSWIN	if (Font)	{		TEXTMETRIC metrics;		HFONT old_font = (HFONT)SelectObject(location, Font);		GetTextMetrics(location, &metrics);		SelectObject(location, old_font);		return metrics.tmInternalLeading + metrics.tmExternalLeading;	}#endif	return 0;}intfG42TextObject::GetCharsWidth(const char * c, intf num_c,	G42DrawLocation location){#ifdef MSWIN	if (Font)	{		RECT r;		r.left = 0;		r.top = 0;		r.right = 10000;		r.bottom = 10000;		HFONT old_font = (HFONT)SelectObject(location, Font);		::DrawText(location, c, num_c, &r, DT_CALCRECT | DT_NOPREFIX | DT_TOP | DT_LEFT);		SelectObject(location, old_font);		return r.right - r.left;	}#endif	return 0;}intfG42TextObject::GetCharWidth(char c, G42DrawLocation location){#ifdef MSWIN	if (Font)	{		RECT r;		r.left = 0;		r.top = 0;		r.right = 10000;		r.bottom = 10000;		HFONT old_font = (HFONT)SelectObject(location, Font);		::DrawText(location, &c, 1, &r, DT_CALCRECT | DT_NOPREFIX | DT_TOP | DT_LEFT);		SelectObject(location, old_font);		return r.right - r.left;	}#endif	return 0;}voidG42TextObject::Calculate(G42DrawLocation location){	NumSections = 0;	intf i_attribute = 0;	NumLines = 0;	intf i_text = 0;	Line[0].Ascent = 0;	Line[0].Descent = 0;	Line[0].SectionStart = NumSections;	intf x;	intf y = Start.Y;	Line[0].Width = 0;	intf i_cursor;	for (i_cursor = 0; i_cursor <= NumText; i_cursor++)	{		CursorLoc[i_cursor] = G42Point(0, 0);	}	ResetState();	for (; i_attribute < ParagraphStart; i_attribute++)		HandleAttribute(*AttributeArray[i_attribute]);	SaveState();	for (intf p = 0; p < NumParagraph; p++)	{		RestoreState();		Section[NumSections].NewParagraph = true;		intf current_left_indent = Current.FirstIndent;		bool set_indents = true;		if (p > 0)		{			y += Current.ParagraphSpacing;		}		intf end_text;		intf end_attribute;		if (p < NumParagraph - 1)		{			end_text = ParagraphArray[p + 1];			end_attribute = ParagraphAttribute[p + 1];		}		else		{			end_text = NumText;			end_attribute = NumAttributes;		}		x = Start.X;		while (i_text < end_text || i_attribute < end_attribute)		{			while (i_attribute < NumAttributes)			{				if (AttributeArray[i_attribute]->GetPosition() > i_text ||					dynamic_cast <G42BulletAttribute *>						((G42BaseAttribute *)AttributeArray[i_attribute]))				{					break;				}				HandleAttribute(*AttributeArray[i_attribute++]);			}			if (set_indents)			{				current_left_indent = Current.FirstIndent;				set_indents = false;			}			intf end_i_text;			if (i_attribute < NumAttributes &&				AttributeArray[i_attribute]->GetPosition() < end_text)			{				end_i_text = AttributeArray[i_attribute]->GetPosition();			}			else			{				end_i_text = end_text;			}			bool process_bullet;			if (i_attribute < NumAttributes &&				AttributeArray[i_attribute]->GetPosition() == i_text &&				dynamic_cast <G42BulletAttribute *>					((G42BaseAttribute *)AttributeArray[i_attribute]) &&				end_i_text == i_text)			{				process_bullet = true;				HandleAttribute(*AttributeArray[i_attribute++]);			}			else			{				process_bullet = false;			}			for (intf i = i_text; i < end_i_text; i++)			{				if (TextArray[i] == '\n' || TextArray[i] == '\t')				{					end_i_text = i;					break;				}			}			// process end of line and tab seperately			bool special_key;			if (!process_bullet && i_text == end_i_text &&				(TextArray[i_text] == '\n' || TextArray[i_text] == '\t'))			{				end_i_text++;				special_key = true;			}			else			{				special_key = false;			}			intf next_i_text = end_i_text;			SetFont();			if (InsertIndex >= i_text && InsertIndex < next_i_text)			{				InsertAttributes = Current;			}			intf ascent = GetAscent(location);			if (Line[NumLines].Ascent < ascent)			{				Line[NumLines].Ascent = ascent;			}			intf descent = GetDescent(location) + GetLeading(location);			if (Line[NumLines].Descent < descent)			{				Line[NumLines].Descent = descent;			}			intf width;			if (end_i_text - i_text > 0 && !special_key)			{				width = GetCharsWidth(TextArray + i_text, end_i_text - i_text,					location);			}			else if (process_bullet)			{				width = GetCharWidth('*', location);			}			else			{				width = 0;			}			bool need_new_line = false;			intf tab_width = 0;			if (Current.TabSpacing > 0 &&				(special_key && TextArray[i_text] == '\t') ||				(process_bullet && Current.BulletHanging))			{				tab_width = ((((width + x - Start.X - 1) /					Current.TabSpacing) + 1) * Current.TabSpacing) -					(x - Start.X) - width;				if ((x - Start.X) + width + tab_width >					WrapWidth - current_left_indent - Current.RightIndent)				{					need_new_line = true;				}			}			if (WrapWidth > 0 && !special_key && !process_bullet)			{				intf old_end_i_text = end_i_text;				intf old_width = width;				while ((x - Start.X) + width >					WrapWidth - current_left_indent - Current.RightIndent &&					end_i_text > i_text)				{					need_new_line = true;					while (end_i_text > i_text &&						!isspace(TextArray[end_i_text - 1]))					{						end_i_text--;					}					next_i_text = end_i_text;					while (end_i_text > i_text &&						isspace(TextArray[end_i_text - 1]))					{						end_i_text--;					}					width = GetCharsWidth(TextArray + i_text, end_i_text - i_text,						location);				}				if (i_text >= end_i_text && next_i_text == end_i_text)				{					end_i_text = old_end_i_text;					width = old_width;					while ((x - Start.X) + width >						WrapWidth - current_left_indent - Current.RightIndent &&						end_i_text > i_text)					{						need_new_line = true;						end_i_text--;						next_i_text = end_i_text;						width = GetCharsWidth(TextArray + i_text,							end_i_text - i_text, location);					}					if (end_i_text <= i_text)					{						end_i_text = i_text + 1;					}				}			}			Line[NumLines].Width = x + width - Start.X;			width += tab_width;			if (i_text < end_i_text && !special_key && !process_bullet)			{				Section[NumSections].X = x;				Section[NumSections].Y = y;				Section[NumSections].TextStart = i_text;				Section[NumSections].TextNum = end_i_text - i_text;				Section[NumSections].Attribute = i_attribute;				Section[NumSections].Bullet = false;				Section[NumSections].Color = Current.Color;				x += width;				if (next_i_text > end_i_text)				{					x += GetCharsWidth(TextArray + end_i_text,						next_i_text - end_i_text, location);				}				NumSections++;				Section[NumSections].NewParagraph = false;				for (intf i_char = i_text + 1; i_char <= next_i_text; i_char++)				{					CursorLoc[i_char].X = GetCharsWidth(TextArray + i_text,						i_char - i_text, location);				}			}			else if (process_bullet)			{				Section[NumSections].X = x;				Section[NumSections].Y = y;				Section[NumSections].TextStart = i_text;				Section[NumSections].TextNum = 0;				Section[NumSections].Attribute = i_attribute;				Section[NumSections].Bullet = true;				Section[NumSections].Color = Current.Color;				if (Current.BulletDingbats)					Section[NumSections].BulletChar = Current.BulletCharacter;				else					Section[NumSections].BulletChar = -1;				x += width;				if (next_i_text > end_i_text)				{					x += GetCharsWidth(TextArray + end_i_text,						next_i_text - end_i_text, location);				}				NumSections++;				Section[NumSections].NewParagraph = false;			}			if (process_bullet && Current.BulletHanging)			{				Current.LeftIndent += Line[NumLines].Width + tab_width;			}			if (need_new_line ||				(i_attribute == NumAttributes && end_i_text == NumText) ||				(special_key && TextArray[i_text] == '\n'))			{				if (NumLines == 0)				{					for (intf i = 0; i < NumSections; i++)					{						Section[i].Y += Line[0].Ascent;					}					y += Line[0].Ascent;				}				Line[NumLines].SectionEnd = NumSections;				if (NumLines > 0)				{					if (Current.LineSpacingMode == LineSpacingAbsolute)					{						y += Current.LineSpacing;					}					else					{						y += Line[NumLines].Ascent + Line[NumLines - 1].Descent +							Current.LineSpacing;					}					if (Current.LineSpacingMode == LineSpacingProportional)					{						PropLine[NumProp++] = NumLines;					}					// if proportional, adjust at end					for (intf i = Line[NumLines].SectionStart;						i < Line[NumLines].SectionEnd; i++)					{						Section[i].Y = y;					}				}				if (Current.HorizontalAlignment != AlignLeft ||					current_left_indent > 0)				{					intf offset = current_left_indent;					if (WrapWidth != 0)					{						if (Current.HorizontalAlignment == AlignCenterH)						{							offset += ((WrapWidth - Current.RightIndent -								current_left_indent - Line[NumLines].Width) >> 1);						}						else if (Current.HorizontalAlignment == AlignRight)						{							offset += (WrapWidth - Current.RightIndent -								current_left_indent - Line[NumLines].Width);						}					}					else					{						if (Current.HorizontalAlignment == AlignCenterH)						{							offset -= (Line[NumLines].Width >> 1);						}						else if (Current.HorizontalAlignment == AlignRight)						{							offset -= Line[NumLines].Width;						}					}					if (offset != 0)					{						for (intf i = Line[NumLines].SectionStart;							i < Line[NumLines].SectionEnd; i++)						{							Section[i].X += offset;						}					}				}				NumLines++;				Line[NumLines].Ascent = 0;				Line[NumLines].Descent = 0;				Line[NumLines].SectionStart = NumSections;				Line[NumLines].Width = 0;				current_left_indent = Current.LeftIndent;				x = Start.X;			}			i_text = next_i_text;		}	}	if (NumProp > 0 && WrapHeight > 0)	{		intf extra = WrapHeight - (Section[NumSections - 1].Y - Section[0].Y);		extra /= NumProp;		if (extra > 0)		{			intf inc_y = 0;			intf i_prop = 0;			for (intf i_line = 0; i_line < NumLines; i_line++)			{				if (inc_y != 0)				{					intf end_section;					if (i_line < NumLines - 1)						end_section = NumSections;					else						end_section = Line[i_line + 1].SectionStart;					for (intf i_section = Line[i_line].SectionStart;						i_section < end_section; i_section++)					{						Section[i_section].Y += inc_y;					}				}				if (i_line == PropLine[i_prop])				{					inc_y += extra;					i_prop++;				}			}		}	}	else if (Current.VerticalAlignment != AlignTop)	{		intf offset = 0;		if (Current.VerticalAlignment == AlignBottom)		{			offset = WrapHeight - (Section[NumSections - 1].Y - Start.Y);		}		else		{			offset = ((WrapHeight -				(Section[NumSections - 1].Y - Start.Y)) >> 1);		}		for (intf i_section = 0; i_section < NumSections; i_section++)		{			Section[i_section].Y += offset;		}	}	intf i_section = 0;	for (i_cursor = 0; i_cursor <= NumText; i_cursor++)	{		while (i_section < NumSections - 1 &&			Section[i_section + 1].TextStart <= i_cursor)		{			i_section++;		}		CursorLoc[i_cursor].X += Section[i_section].X;		CursorLoc[i_cursor].Y += Section[i_section].Y;	}}voidG42TextObject::DrawText(G42DrawLocation location){	if (NumText <= 0 && NumAttributes <= 0)		return;	intf i_attribute = 0;//	intf i_text = 0;	Calculate(location);	ResetState();	for (; i_attribute < ParagraphStart; i_attribute++)	{		HandleAttribute(*AttributeArray[i_attribute]);	}	SaveState();	for (intf i_section = 0; i_section < NumSections; i_section++)	{		if (Section[i_section].NewParagraph)		{			RestoreState();		}		for (; i_attribute < Section[i_section].Attribute; i_attribute++)		{			HandleAttribute(*AttributeArray[i_attribute]);		}		SetFont();		if (Section[i_section].Bullet)		{#if 1			// code that draws a circle instead of the character			intf width = GetCharWidth('*', location);			intf height = GetAscent(location) + GetDescent(location);			intf diameter = min(width, height) - 2;			if (diameter < 2)				diameter = 2;			intf x_offset = (width - diameter) / 2;			intf y_offset = (height - diameter) / 2;			#ifdef MSWIN			Ellipse(location, Section[i_section].X + x_offset,				Section[i_section].Y + y_offset - GetAscent(location),				Section[i_section].X + x_offset + diameter,				Section[i_section].Y + y_offset - GetAscent(location) + diameter);			#endif#else			// old code that drew the actual character, still in java form			if (Section[i_section].BulletChar >= 0)			{				Font sf = new Font ("ZapfDingbats", style, size);				g.setFont(sf);				char [] b = new char [1];				b[0] = (char)Section[i_section].BulletChar;				g.drawChars(b, 0, 1,					Section[i_section].X, Section[i_section].Y);				g.setFont(f);			}			else			{				g.drawString("*", section[i_section].X,					section[i_section].Y);			}#endif		}		else		{			#ifdef MSWIN/*			RECT r;			r.left = 0;			r.top = 0;			r.right = 10000;			r.bottom = 10000;			HFONT old_font = (HFONT)SelectObject(location, Font);			::DrawText(location, TextArray + Section[i_section].TextStart,				Section[i_section].TextNum, &r,				DT_NOPREFIX | DT_BASELINE | DT_LEFT);			SelectObject(location, old_font);*/			HFONT old_font = (HFONT)SelectObject(location, Font);			SetTextAlign(location, TA_BASELINE | TA_LEFT);			SetTextColor(location, RGB(Section[i_section].Color.Red,				Section[i_section].Color.Green, Section[i_section].Color.Blue));			TextOut(location, Section[i_section].X, Section[i_section].Y,				TextArray + Section[i_section].TextStart,				Section[i_section].TextNum);			SelectObject(location, old_font);			#endif		}#if 0// code to do underline if anyone needs it.  Still in java form		if (Current.Underline)		{			FontMetrics metrics = g.getFontMetrics();			intf descent = metrics.getDescent();			intf x = Section[i_section].X;			intf y = Section[i_section].Y + (descent >> 1) - (descent >> 3);			intf height;			if (Current.Bold)				height = (descent >> 1) - (descent >> 4);			else				height = descent >> 2;			if (height <= 0)				height = 1;			intf width;			if (Section[i_section].Bullet)				width = metrics.charWidth('*');			else				width = metrics.charsWidth(TextArray,					Section[i_section].TextStart,					Section[i_section].TextNum);			g.fillRect(x, y, width, height);		}#endif	}}voidG42TextObject::DrawCursor(G42DrawLocation location){	G42Point p1 = CursorLoc[InsertIndex];	G42Point p2 = p1;	p2.Y -= InsertAttributes.Size;	#ifdef MSWIN	G42DrawLocationVerifier dc(location,		AreaController->GetSurfaceController()->GetSurface(),		AreaController->GetSurfaceController()->GetWindowsPalette());	G42XORStyle xor(dc);	HPEN old_pen = (HPEN)SelectObject(dc, GetStockObject(BLACK_PEN));	MoveToEx(dc, p1.X, p1.Y, 0);	LineTo(dc, p2.X, p2.Y);	SelectObject(dc, old_pen);	xor.Clear();	#endif}#if 0 // original java code// g42text.java - implements g42text class/*	 g42text.java - stores and paints advanced text	 formating.	 Copyright (c) 1996 Group 42, Inc.	 This class implements text that can change attributes	 between characters, and can handle paragraphs.  To use,	 you create it, set up your initial conditions, then	 Start adding text with addText().  When you need to	 change an attribute, you just change it, and the class	 will only change the attribute for new text added.  To	 Start a new paragraph, call nextParagraph().  nextParagraph()	 can be called for the first paragraph if you want to set	 up some attributes on a global bases, but others are inside	 the paragraph.  This class will word wrap if you setWrapWidth()	 which is the width of the box to wrap words.    I eventually plan to add the ability to move the insertion    point for addText(), and to give the ability to select a    range of text to change an attribute over.Know problems or bugs:    No known problems.Fixed problems    23 Sep 96 - added word wrapping, fixed other bugs, added comments    21 Nov 96 - added bullets, fixed word wrapping    22 Nov 96 - added vertical alignment    13 Jan 97 - fixed indent problems    23 Jan 97 - changed bullets to drawing a circle     4 Feb 97 - removed it from the package, added alignment without wrapConstructor Index    public Text()        creates an empty Text objectMethod Index    public void addText(char [] text, intf offset, intf num)    public void addText(String string)    public void addText(String string, intf offset, intf num)        Adds the text using the current attributes    public void nextParagraph()        Starts a new paragraph.  You don't have to call this        for the first paragraph (although you can, especially if        you want to have some attributes tied to the paragraph        instead of the whole thing).    public void setStart(Point Start)        Sets the starting point of the text string.    public void setFontName(String name)        Sets the font name.  Must be one of        Toolkit.getDefaultToolkit().getFontList()    public void setFontSize(intf pixels)        Sets the size of the font in pixels    public void setBold(bool state)        Turns bold on or off	 public void setItalic(bool state)        Turns italic on or off    public void setColor(Color color)        Sets the color of the text    public intf getWrapWidth()        gets the width of word wrapping    public void setWrapWidth(intf width)        turns on word wrapping and sets the width    public bool isWrapped()        returns true if word wrapping is enabled    public void setNoWrap()        turns off word wrapping    public void setUnderline(bool state)        turns on or off underlining    public void setWrapHeight(intf pixels)        sets word wrapping height    public void setLineSpacing(intf pixels)        sets the line spacing in pixels    public void setParagraphSpacing(intf pixels)        sets the paragraph spacing in pixels    public void setTabSpacing(intf pixels)        sets the tab spacing in pixels    public void setFirstIndent(intf pixels)        sets the indent of the first line of the paragraph in pixels    public void setLeftIndent(intf pixels)        sets the left indent of the paragraph in pixels    public void setRightIndent(intf pixels)		  sets the right indent of the paragraph in pixels    These next variables are constants for the alignment functions below    public static intf AlignLeft = 0;    public static intf AlignTop = 0;    public static intf AlignCenter = 1;    public static intf AlignRight = 2;    public static intf AlignBottom = 2;    public void setHorizontalAlignment(intf state)        sets the horizontal alignment (left, center, or right)    public void setVerticalAlignment(intf state)        sets the vertical alignment (top, center, or bottom)    public void addBullet()        adds a bullet into the text    public void addBullet(intf bullet)		  adds a bullet from the dingbat font into the text	 public void addIndentBullet()		  adds a bullet into the text and indents all following lines		  of the paragraph to one tab stop to the right of the bullet	 public void addIndentBullet(intf bullet)		  adds a bullet into the text and indents all following lines		  of the paragraph to one tab stop to the right of the bullet.		  The bullet is from the dingbats font.	 public void draw(Graphics g)		  draws the text*///package COM.Group42.Graphics;import java.awt.*;import java.applet.*;import java.lang.*;//import COM.Group42.Graphics.*;import sun.tools.debug.*;public class Text extends Object{    public static intf AlignLeft = 0;    public static intf AlignTop = 0;    public static intf AlignCenter = 1;    public static intf AlignRight = 2;    public static intf AlignBottom = 2;    public static intf LineSpacingProportional = 1;    public static intf LineSpacingIncremental = 2;    public static intf LineSpacingAbsolute = 3;    private char [] TextArray = null;    private intf NumText = 0;    private Point Start = null;    private Font font = null;    private BaseTextAttribute [] AttributeArray = null;    private intf NumAttributes = 0;    private intf ParagraphArray [] = null; // where paragraph starts    private intf ParagraphAttribute [] = null; // attribute where paragraph starts    private intf NumParagraph = 0;   // in TextArray (characters)    private intf ParagraphStart = 0; // where in the attributes the first starts    private intf WrapWidth = 0;    private intf wrapHeight = 0;    bool needFont = true;    bool needColor = true;    String name = null;    bool bold = false;    bool italic = false;    bool underline = false;    intf horizontalAlignment = AlignLeft;    intf verticalAlignment = AlignTop;    intf size = 12;    Color color = null;    intf TabSpacing = 5;    intf leftIndent = 0;    intf Current.RightIndent = 0;    intf FirstIndent = 0;    intf ParagraphSpacing = 0;    intf lineSpacing = 0;    intf lineSpacingMode = LineSpacingIncremental;    intf bulletCharacter;    bool bulletHanging;    bool bulletDingbats;    public Text()    {    }    private void checkTextArray(intf length)    {        if (TextArray == null || length >= TextArray.length)        {            intf newLength = length + 256;            char [] newText = new char [newLength];            if (TextArray != null && NumText > 0)            {                for (intf i = 0; i < NumText; i++)                    newText[i] = TextArray[i];            }            TextArray = newText;        }    }    private void checkAttributeArray(intf length)    {        if (AttributeArray == null || length >= AttributeArray.length)        {            intf newLength = length + 16;            BaseTextAttribute [] newAttribute =                new BaseTextAttribute [newLength];            if (AttributeArray != null && NumAttributes > 0)            {                for (intf i = 0; i < NumAttributes; i++)                    newAttribute[i] = AttributeArray[i];            }            AttributeArray = newAttribute;        }    }    private void checkParagraphArray(intf length)    {        if (ParagraphArray == null || length >= ParagraphArray.length)        {            intf newLength = length + 16;            intf [] newParagraph = new intf [newLength];            if (ParagraphArray != null && NumParagraph > 0)            {                for (intf i = 0; i < NumParagraph; i++)                    newParagraph[i] = ParagraphArray[i];            }            ParagraphArray = newParagraph;        }        if (ParagraphAttribute == null || length >= ParagraphAttribute.length)        {            intf newLength = length + 16;            intf [] newParagraph = new intf [newLength];            if (ParagraphAttribute != null && NumParagraph > 0)            {                for (intf i = 0; i < NumParagraph; i++)                    newParagraph[i] = ParagraphAttribute[i];            }            ParagraphAttribute = newParagraph;        }    }    public void addText(char [] text, intf offset, intf num)    {        checkTextArray(NumText + num);        for (intf i = 0; i < num; i++)            TextArray[NumText++] = text[offset + i];    }    public void addText(String string)    {        addText(string, 0, string.length());    }    public void nextParagraph()    {        checkParagraphArray(NumParagraph);        if (NumParagraph == 0)            ParagraphStart = NumAttributes;        ParagraphAttribute[NumParagraph] = NumAttributes;        ParagraphArray[NumParagraph++] = NumText;    }    public void addText(String string, intf offset, intf num)    {        if (NumParagraph == 0)            nextParagraph();        checkTextArray(NumText + num);        string.getChars(offset, offset + num, TextArray, NumText);        NumText += num;    }    public void setStart(Point Start)    {        this.Start = new Point(Start.x, Start.y);    }    public void setFontName(String name)    {        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new FontNameTextAttribute(name, NumText);    }    public void setFontSize(intf size)    {        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new FontSizeTextAttribute(size, NumText);    }    public void setBold(bool bold)    {        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new BoldTextAttribute(bold, NumText);    }    public void setItalic(bool bold)    {        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new ItalicTextAttribute(bold, NumText);    }    public void setColor(Color color)    {        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new ColorTextAttribute(color, NumText);    }    public intf getWrapWidth()    {        return WrapWidth;    }    public void setWrapWidth(intf width)    {        WrapWidth = width;    }    public bool isWrapped()    {        return (WrapWidth > 0);    }    public void setNoWrap()    {        WrapWidth = 0;    }    public void setUnderline(bool state)    {        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new UnderlineTextAttribute(state, NumText);    }    public void setWrapHeight(intf pixels)    {        wrapHeight = pixels;    }    public void setLineSpacing(intf pixels, intf mode)    {        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new LineSpacingTextAttribute(pixels, mode, NumText);    }    public void setParagraphSpacing(intf pixels)    {        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new ParagraphSpacingTextAttribute(pixels, NumText);    }    public void setTabSpacing(intf pixels)    {        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new TabSpacingTextAttribute(pixels, NumText);    }    public void setFirstIndent(intf pixels)    {        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new FirstIndentTextAttribute(pixels, NumText);    }    public void setLeftIndent(intf pixels)    {        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new LeftIndentTextAttribute(pixels, NumText);    }    public void setRightIndent(intf pixels)    {        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new RightIndentTextAttribute(pixels, NumText);    }    public void setHorizontalAlignment(intf state)    {        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new HorizontalAlignmentTextAttribute(state, NumText);    }    public void setVerticalAlignment(intf state)    {        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new VerticalAlignmentTextAttribute(state, NumText);    }    public void addBullet()    {        if (NumParagraph == 0)            nextParagraph();        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new BulletTextAttribute(0, false, false, NumText);    }    public void addBullet(intf bullet)    {        if (NumParagraph == 0)            nextParagraph();        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new BulletTextAttribute(bullet, false, true, NumText);    }    public void addIndentBullet()    {        if (NumParagraph == 0)            nextParagraph();        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new BulletTextAttribute(0, true, false, NumText);    }    public void addIndentBullet(intf bullet)    {        if (NumParagraph == 0)            nextParagraph();        checkAttributeArray(NumAttributes);        AttributeArray[NumAttributes++] =            new BulletTextAttribute(bullet, true, true, NumText);    }    private void resetState()    {        font = null;        needFont = true;        name = Toolkit.getDefaultToolkit().getFontList()[0];        bold = false;        italic = false;        underline = false;        size = 12;        color = new Color(0, 0, 0);        TabSpacing = 5;        leftIndent = 0;        Current.RightIndent = 0;        FirstIndent = 0;        horizontalAlignment = AlignLeft;        verticalAlignment = AlignTop;        lineSpacing = 0;        lineSpacingMode = LineSpacingIncremental;        ParagraphSpacing = 0;    }    String savedName;    bool savedBold;    bool savedItalic;    bool savedUnderline;    intf savedHorizontalAlignment;    intf savedVerticalAlignment;    intf savedSize;    Color savedColor;    intf savedTabSpacing;    intf savedFirstIndent;    intf savedLeftIndent;    intf savedRightIndent;    intf savedParagraphSpacing;    intf savedLineSpacing;    intf savedLineSpacingMode;    private void saveState()    {        savedName = name;        savedBold = bold;        savedItalic = italic;        savedUnderline = underline;        savedSize = size;        savedColor = color;        savedHorizontalAlignment = horizontalAlignment;        savedVerticalAlignment = verticalAlignment;        savedTabSpacing = TabSpacing;        savedFirstIndent = FirstIndent;        savedLeftIndent = leftIndent;        savedRightIndent = Current.RightIndent;        savedParagraphSpacing = ParagraphSpacing;        savedLineSpacing = lineSpacing;        savedLineSpacingMode = lineSpacingMode;    }    private void restoreState()    {        name = savedName;        bold = savedBold;        italic = savedItalic;        underline = savedUnderline;        size = savedSize;        color = savedColor;        horizontalAlignment = savedHorizontalAlignment;        verticalAlignment = savedVerticalAlignment;        needFont = true;        TabSpacing = savedTabSpacing;        FirstIndent = savedFirstIndent;        leftIndent = savedLeftIndent;        Current.RightIndent = savedRightIndent;        ParagraphSpacing = savedParagraphSpacing;        lineSpacing = savedLineSpacing;        lineSpacingMode = savedLineSpacingMode;    }    private void handleAttribute(BaseTextAttribute attribute)    {        attribute.changeText(this);    }    private void setFont(Graphics g)    {        if (needColor)            g.setColor(color);        if (!needFont)            return;        intf style;        if (bold && italic)            style = Font.BOLD + Font.ITALIC;        else if (bold)            style = Font.BOLD;        else if (italic)            style = Font.ITALIC;        else            style = Font.PLAIN;        font = new Font (name, style, size);        g.setFont(font);    }    private intf LineWidth [] = null;    private intf LineAscent [] = null;    private intf LineDescent [] = null;    private intf LineSectionStart [] = null;    private intf lineSectionEnd [] = null;    private intf NumLines = 0;    private void checkLineArrays(intf length)    {        if (LineWidth == null || length >= LineWidth.length)        {            intf newNumLines = length + 16;            intf [] newLineWidth = new intf [newNumLines];            if (LineWidth != null && NumLines > 0)            {                for (intf i = 0; i < NumLines; i++)                    newLineWidth[i] = LineWidth[i];            }            LineWidth = newLineWidth;        }        if (LineAscent == null || length >= LineAscent.length)        {            intf newNumLines = length + 16;            intf [] newLineAscent = new intf [newNumLines];            if (LineAscent != null && NumLines > 0)            {                for (intf i = 0; i < NumLines; i++)                    newLineAscent[i] = LineAscent[i];            }            LineAscent = newLineAscent;        }        if (LineDescent == null || length >= LineDescent.length)        {            intf newNumLines = length + 16;            intf [] newLineDescent = new intf [newNumLines];            if (LineDescent != null && NumLines > 0)            {                for (intf i = 0; i < NumLines; i++)                    newLineDescent[i] = LineDescent[i];            }            LineDescent = newLineDescent;        }        if (LineSectionStart == null || length >= LineSectionStart.length)        {            intf newNumLines = length + 16;            intf [] newLineSectionStart = new intf [newNumLines];            if (LineSectionStart != null && NumLines > 0)            {                for (intf i = 0; i < NumLines; i++)                    newLineSectionStart[i] = LineSectionStart[i];            }            LineSectionStart = newLineSectionStart;        }        if (lineSectionEnd == null || length >= lineSectionEnd.length)        {            intf newNumLines = length + 16;            intf [] newLineSectionEnd = new intf [newNumLines];            if (lineSectionEnd != null && NumLines > 0)            {                for (intf i = 0; i < NumLines; i++)                    newLineSectionEnd[i] = lineSectionEnd[i];            }            lineSectionEnd = newLineSectionEnd;        }    }    private bool sectionNewParagraph [];    private intf sectionTextStart [];    private intf sectionTextNum [];    private intf sectionX [];    private intf sectionY [];    private intf sectionAttribute [];    private bool sectionBullet [];    private intf sectionBulletChar [];    private intf NumSections;    private void checkSectionArrays(intf length)    {        if (sectionTextStart == null || length >= sectionTextStart.length)        {            intf newNumSections = length + 16;            intf [] newSectionTextStart = new intf [newNumSections];            if (sectionTextStart != null && NumSections > 0)            {                for (intf i = 0; i < NumSections; i++)                    newSectionTextStart[i] = sectionTextStart[i];            }            sectionTextStart = newSectionTextStart;        }        if (sectionTextNum == null || length >= sectionTextNum.length)        {            intf newNumSections = length + 16;            intf [] newSectionTextNum = new intf [newNumSections];            if (sectionTextNum != null && NumSections > 0)            {                for (intf i = 0; i < NumSections; i++)                    newSectionTextNum[i] = sectionTextNum[i];            }            sectionTextNum = newSectionTextNum;        }        if (sectionX == null || length >= sectionX.length)        {            intf newNumSections = length + 16;            intf [] newSectionX = new intf [newNumSections];            if (sectionX != null && NumSections > 0)            {                for (intf i = 0; i < NumSections; i++)                    newSectionX[i] = sectionX[i];            }            sectionX = newSectionX;        }        if (sectionY == null || length >= sectionY.length)        {            intf newNumSections = length + 16;            intf [] newSectionY = new intf [newNumSections];            if (sectionY != null && NumSections > 0)            {                for (intf i = 0; i < NumSections; i++)                    newSectionY[i] = sectionY[i];            }            sectionY = newSectionY;        }        if (sectionAttribute == null || length >= sectionAttribute.length)        {            intf newNumSections = length + 16;            intf [] newSectionAttribute = new intf [newNumSections];            if (sectionAttribute != null && NumSections > 0)            {                for (intf i = 0; i < NumSections; i++)                    newSectionAttribute[i] = sectionAttribute[i];            }            sectionAttribute = newSectionAttribute;        }        if (sectionNewParagraph == null ||            length >= sectionNewParagraph.length)        {            intf newNumSections = length + 16;            bool [] newSectionNewParagraph =                new bool [newNumSections];            if (sectionNewParagraph != null && NumSections > 0)            {                for (intf i = 0; i < NumSections; i++)                    newSectionNewParagraph[i] = sectionNewParagraph[i];            }            sectionNewParagraph = newSectionNewParagraph;        }        if (sectionBullet == null ||            length >= sectionBullet.length)        {            intf newNumSections = length + 16;            bool [] newSectionBullet =                new bool [newNumSections];            if (sectionBullet != null && NumSections > 0)            {                for (intf i = 0; i < NumSections; i++)                    newSectionBullet[i] = sectionBullet[i];            }            sectionBullet = newSectionBullet;		  }        if (sectionBulletChar == null ||            length >= sectionBulletChar.length)        {            intf newNumSections = length + 16;            intf [] newSectionBulletChar =                new intf [newNumSections];            if (sectionBulletChar != null && NumSections > 0)            {                for (intf i = 0; i < NumSections; i++)                    newSectionBulletChar[i] = sectionBulletChar[i];            }            sectionBulletChar = newSectionBulletChar;        }    }    private intf propLine [];    private intf numProp;    private void checkProp(intf length)    {        if (propLine == null || length >= propLine.length)        {				intf newNumProp = length + 16;            intf [] newPropLine = new intf [newNumProp];            if (propLine != null && numProp > 0)            {                for (intf i = 0; i < numProp; i++)                    newPropLine[i] = propLine[i];            }            propLine = newPropLine;        }    }    private void calculate(Graphics g)    {/*System.out.print("calculate string {");TextArray[NumText] = 0;System.out.print(TextArray);System.out.println("}");System.out.println("end of string");System.out.print("WrapWidth, wrapHeight: ");System.out.print(WrapWidth);System.out.print(", ");System.out.println(wrapHeight);*/        NumSections = 0;		  intf i_paragraph = 0;        intf i_attribute = 0;        NumLines = 0;        intf i_text = 0;        checkLineArrays(1); // initialize these if not already done        checkSectionArrays(1);        LineAscent[0] = 0;        LineDescent[0] = 0;        LineSectionStart[0] = NumSections;        intf x = Start.x;        intf y = Start.y;		  intf current_line_width = 0;        LineWidth[0] = 0;/*System.out.print("NumText: ");System.out.println(NumText);System.out.print("NumAttributes: ");System.out.println(NumAttributes);for (intf zxz = 0; zxz < NumAttributes; zxz++){    System.out.print("Attribute[");    System.out.print(zxz);	 System.out.print("] type, position: ");    System.out.print(AttributeArray[zxz].type);    System.out.print(", ");    System.out.println(AttributeArray[zxz].position);}*/        resetState();        for (; i_attribute < ParagraphStart; i_attribute++)            handleAttribute(AttributeArray[i_attribute]);        saveState();        for (intf p = 0; p < NumParagraph; p++)        {//System.out.println("calculate 1");            restoreState();            sectionNewParagraph[NumSections] = true;            intf current_left_indent = FirstIndent;            bool set_indents = true;/*System.out.print("current_left_indent, left, right, first (1): ");System.out.print(current_left_indent);System.out.print(", ");System.out.print(leftIndent);System.out.print(", ");System.out.print(Current.RightIndent);System.out.print(", ");System.out.println(FirstIndent);*/            if (p > 0)					 y += ParagraphSpacing;            intf end_text;            intf end_attribute;				if (p < NumParagraph - 1)            {					 end_text = ParagraphArray[p + 1];					 end_attribute = ParagraphAttribute[p + 1];            }            else            {                end_text = NumText;                end_attribute = NumAttributes;            }            x = Start.x; // + current_left_indent;				while (i_text < end_text || i_attribute < end_attribute)            {//System.out.println("calculate 2");                while (i_attribute < NumAttributes)                {/*System.out.print("i_attribute, position, i_text, type: ");System.out.print(i_attribute);System.out.print(", ");System.out.print(AttributeArray[i_attribute].position);System.out.print(", ");System.out.print(i_text);System.out.print(", ");System.out.println(AttributeArray[i_attribute].type);*/                    if (AttributeArray[i_attribute].position > i_text ||                        AttributeArray[i_attribute].type ==                            BaseTextAttribute.typeBullet)                        break;//System.out.print("Handling attribute ");//System.out.println(i_attribute);                    handleAttribute(AttributeArray[i_attribute++]);                }                if (set_indents)					 {                    current_left_indent = FirstIndent;                    set_indents = false;//System.out.print("set_indents is true, Setting current_left_indent to ");//System.out.println(current_left_indent);                }                intf end_i_text;                if (i_attribute < NumAttributes &&						  AttributeArray[i_attribute].position < end_text)                    end_i_text = AttributeArray[i_attribute].position;                else                    end_i_text = end_text;                bool process_bullet;                if (i_attribute < NumAttributes &&                    AttributeArray[i_attribute].position == i_text &&                    AttributeArray[i_attribute].type ==                       BaseTextAttribute.typeBullet &&                    end_i_text == i_text)                {                    process_bullet = true;                    handleAttribute(AttributeArray[i_attribute++]);                }                else					 {                    process_bullet = false;                }                for (intf i = i_text; i < end_i_text; i++)                {                    if (TextArray[i] == '\n' || TextArray[i] == '\t')						  {                        end_i_text = i;                        break;                    }                }                // process end of line and tab seperately                bool special_key;                if (!process_bullet && i_text == end_i_text &&                    (TextArray[i_text] == '\n' || TextArray[i_text] == '\t'))                {                    end_i_text++;                    special_key = true;                }                else                {                    special_key = false;                }                intf next_i_text = end_i_text;                setFont(g);					 if (LineAscent[NumLines] < g.getFontMetrics().getAscent())                    LineAscent[NumLines] = g.getFontMetrics().getAscent();                if (LineDescent[NumLines] <                    g.getFontMetrics().getDescent() +                    g.getFontMetrics().getLeading())                {                    LineDescent[NumLines] =                        g.getFontMetrics().getDescent() +                        g.getFontMetrics().getLeading();                }                intf width;                if (end_i_text - i_text > 0 && !special_key)                {                    width = g.getFontMetrics().charsWidth(                        TextArray, i_text, end_i_text - i_text);                }                else if (process_bullet)                {/*                    if (bulletCharacter >= 0)                    {								intf style;                        if (bold && italic)                            style = Font.BOLD + Font.ITALIC;                        else if (bold)                            style = Font.BOLD;                        else if (italic)                            style = Font.ITALIC;                        else                            style = Font.PLAIN;                        Font sf = new Font ("ZapfDingbats", style, size);                        width = g.getFontMetrics(sf).charWidth(bulletCharacter);                    }                    else*/                    {                        width = g.getFontMetrics().charWidth('*');                    }                }                else                {                    width = 0;					 }					 bool need_new_line = false;                intf tab_width = 0;                if (TabSpacing > 0 &&                    (special_key && TextArray[i_text] == '\t') ||                    (process_bullet && bulletHanging))                {                    tab_width = ((((width + x - Start.x - 1) /								TabSpacing) + 1) * TabSpacing) -                        (x - Start.x) - width;                    if ((x - Start.x) + width + tab_width >                        WrapWidth - current_left_indent - Current.RightIndent)                    {                        need_new_line = true;                    }                }//System.out.println("Before Wordwrap");                if (WrapWidth > 0 && !special_key && !process_bullet)                {                    intf old_end_i_text = end_i_text;						  intf old_width = width;						  while ((x - Start.x) + width >                        WrapWidth - current_left_indent - Current.RightIndent &&                        end_i_text > i_text)                    {                        need_new_line = true;                        while (end_i_text > i_text &&                            !Character.isSpace(TextArray[end_i_text - 1]))                        {                            end_i_text--;                        }                        next_i_text = end_i_text;                        while (end_i_text > i_text &&                            Character.isSpace(TextArray[end_i_text - 1]))                        {                            end_i_text--;                        }                        width = g.getFontMetrics().charsWidth(                            TextArray, i_text, end_i_text - i_text);                    }                    if (i_text >= end_i_text && next_i_text == end_i_text)                    {								end_i_text = old_end_i_text;								width = old_width;                        while ((x - Start.x) + width >                            WrapWidth - current_left_indent - Current.RightIndent &&                            end_i_text > i_text)                        {                            need_new_line = true;                            end_i_text--;                            next_i_text = end_i_text;                            width = g.getFontMetrics().charsWidth(                                TextArray, i_text, end_i_text - i_text);                        }                        if (end_i_text <= i_text)                        {                            end_i_text = i_text + 1;                        }                    }                }//System.out.println("After Wordwrap");					 LineWidth[NumLines] = x + width - Start.x;                width += tab_width;                if (i_text < end_i_text && !special_key && !process_bullet)                {                    sectionX[NumSections] = x;						  sectionY[NumSections] = y;                    sectionTextStart[NumSections] = i_text;                    sectionTextNum[NumSections] = end_i_text - i_text;                    sectionAttribute[NumSections] = i_attribute;                    sectionBullet[NumSections] = false;                    x += width;                    if (next_i_text > end_i_text)                        x += g.getFontMetrics().charsWidth(                            TextArray, end_i_text, next_i_text - end_i_text);                    NumSections++;                    checkSectionArrays(NumSections + 1);                    sectionNewParagraph[NumSections] = false;                }                else if (process_bullet)                {                    sectionX[NumSections] = x;                    sectionY[NumSections] = y;						  sectionTextStart[NumSections] = i_text;                    sectionTextNum[NumSections] = 0;                    sectionAttribute[NumSections] = i_attribute;                    sectionBullet[NumSections] = true;                    if (bulletDingbats)                        sectionBulletChar[NumSections] = bulletCharacter;                    else                        sectionBulletChar[NumSections] = -1;                    x += width;                    if (next_i_text > end_i_text)                        x += g.getFontMetrics().charsWidth(                            TextArray, end_i_text, next_i_text - end_i_text);                    NumSections++;                    checkSectionArrays(NumSections + 1);                    sectionNewParagraph[NumSections] = false;                }					 if (process_bullet && bulletHanging)                {						  leftIndent += LineWidth[NumLines] + tab_width;/*System.out.print("hanging bullets: current_left_indent, left, right, first (3): ");System.out.print(current_left_indent);System.out.print(", ");System.out.print(leftIndent);System.out.print(", ");System.out.print(Current.RightIndent);System.out.print(", ");System.out.println(FirstIndent);*/                }					 if (need_new_line ||                    (i_attribute == NumAttributes && end_i_text == NumText) ||						  (special_key && TextArray[i_text] == '\n'))                {//System.out.println("calculate 4");                    if (NumLines == 0)                    {                        for (intf i = 0; i < NumSections; i++)                            sectionY[i] += LineAscent[0];                        y += LineAscent[0];                    }                    lineSectionEnd[NumLines] = NumSections;                    if (NumLines > 0)						  {                        if (lineSpacingMode == LineSpacingAbsolute)                        {                            y += lineSpacing;                        }                        else                        {                            y += LineAscent[NumLines] +                                LineDescent[NumLines - 1] +                                lineSpacing;                        }                        if (lineSpacingMode == LineSpacingProportional)                        {                            checkProp(numProp);                            propLine[numProp++] = NumLines;                        }                        // if proportional, adjust at end                        for (intf i = LineSectionStart[NumLines];                            i < lineSectionEnd[NumLines]; i++)                        {                            sectionY[i] = y;                        }						  }                    if (horizontalAlignment != AlignLeft ||                        current_left_indent > 0)                    {                        intf offset = current_left_indent;                        if (WrapWidth != 0)                        {                            if (horizontalAlignment == AlignCenter)                                offset += (WrapWidth - Current.RightIndent -                                    current_left_indent -                                    LineWidth[NumLines]) >> 1;                            else if (horizontalAlignment == AlignRight)										  offset += (WrapWidth - Current.RightIndent -                                    LineWidth[NumLines]);                        }                        else                        {                            if (horizontalAlignment == AlignCenter)                                offset -= (LineWidth[NumLines] >> 1);                            else if (horizontalAlignment == AlignRight)                                offset -= LineWidth[NumLines];                        }								if (offset != 0)                        {                            for (intf i = LineSectionStart[NumLines];                                i < lineSectionEnd[NumLines]; i++)                            {                                sectionX[i] += offset;                            }                        }                    }                    NumLines++;                    checkLineArrays(NumLines + 1);						  LineAscent[NumLines] = 0;						  LineDescent[NumLines] = 0;                    LineSectionStart[NumLines] = NumSections;						  LineWidth[NumLines] = 0;                    current_left_indent = leftIndent;/*System.out.print("next line: current_left_indent, left, right, first (2): ");System.out.print(current_left_indent);System.out.print(", ");System.out.print(leftIndent);System.out.print(", ");System.out.print(Current.RightIndent);System.out.print(", ");System.out.println(FirstIndent);*/						  x = Start.x; //  + current_left_indent;                }/*System.out.print("i_text, next_i_text, end_i_text, end_text, i_attribute, NumAttributes: ");System.out.print(i_text);System.out.print(", ");System.out.print(next_i_text);System.out.print(", ");System.out.print(end_i_text);System.out.print(", ");System.out.print(end_text);System.out.print(", ");System.out.print(i_attribute);System.out.print(", ");System.out.println(NumAttributes);*/					 i_text = next_i_text;            }        }//System.out.println("calculate 5");        if (numProp > 0 && wrapHeight > 0)        {            intf extra = wrapHeight -                (sectionY[NumSections - 1] - sectionY[0]);            extra /= numProp;            if (extra > 0)            {                intf inc_y = 0;                intf i_prop = 0;                for (intf i_line = 0; i_line < NumLines; i_line++)                {                    if (inc_y != 0)                    {                        intf end_section;								if (i_line < NumLines - 1)                            end_section = NumSections;                        else                            end_section = LineSectionStart[i_line + 1];								for (intf i_section = LineSectionStart[i_line];                            i_section < end_section; i_section++)                        {									 sectionY[i_section] += inc_y;                        }                    }						  if (i_line == propLine[i_prop])                    {								inc_y += extra;								i_prop++;                    }                }            }        }        else if (verticalAlignment != AlignTop)        {            intf offset = 0;            if (verticalAlignment == AlignBottom)            {                offset = wrapHeight - (sectionY[NumSections - 1] - Start.y);            }            else            {                offset = ((wrapHeight -                    (sectionY[NumSections - 1] - Start.y)) >> 1);				}            for (intf i_section = 0; i_section < NumSections; i_section++)            {                sectionY[i_section] += offset;            }        }//System.out.println("end calculate");    }    public void draw(Graphics g)    {//System.out.println("begin draw");//intf debugY = 230;//g.drawString("draw 0", 100, debugY); debugY += 20;		  if ((NumText <= 0 && NumAttributes <= 0) || Start == null)            return;//g.drawString("draw 1", 100, debugY); debugY += 20;        intf i_attribute = 0;		  intf i_text = 0;//g.drawString("draw 2", 100, debugY); debugY += 20;		  calculate(g);//g.drawString("draw 3", 100, debugY); debugY += 20;        resetState();		  for (; i_attribute < ParagraphStart; i_attribute++)            handleAttribute(AttributeArray[i_attribute]);        saveState();/* debug codeStringBuffer s = new StringBuffer("NumSections: ");s.append(NumSections);s.append(", Start.y: ");s.append(Start.y);//g.drawString(s.toString(), 300, 15);System.out.println(s.toString());*/		  for (intf i_section = 0; i_section < NumSections; i_section++)        {            if (sectionNewParagraph[i_section])                restoreState();				for (; i_attribute < sectionAttribute[i_section]; i_attribute++)					 handleAttribute(AttributeArray[i_attribute]);            setFont(g);            if (sectionBullet[i_section])            {                intf width = g.getFontMetrics().charWidth('*');                intf height = g.getFontMetrics().getHeight();                intf diameter = Math.min(width, height) - 2;                if (diameter < 2)                    diameter = 2;                intf xOffset = (width - diameter) / 2;                intf yOffset = (height - diameter) / 2;                g.fillOval(sectionX[i_section] + xOffset,                    sectionY[i_section] + yOffset - g.getFontMetrics().getAscent(),                    diameter, diameter);/*                if (sectionBulletChar[i_section] >= 0)                {                    Font f = g.getFont();                    intf style;                    if (bold && italic)								style = Font.BOLD + Font.ITALIC;                    else if (bold)                        style = Font.BOLD;                    else if (italic)                        style = Font.ITALIC;                    else                        style = Font.PLAIN;                    Font sf = new Font ("ZapfDingbats", style, size);//                    Font sf = new Font ("symbol", style, size);                    g.setFont(sf);                    char [] b = new char [1];                    b[0] = (char)sectionBulletChar[i_section];                    g.drawChars(b, 0, 1,                        sectionX[i_section], sectionY[i_section]);                    g.setFont(f);                }                else                {                    g.drawString("*", sectionX[i_section],                        sectionY[i_section]);                }*/				}            else            {                g.drawChars(TextArray, sectionTextStart[i_section],                    sectionTextNum[i_section], sectionX[i_section],                    sectionY[i_section]);            }            if (underline)            {                FontMetrics metrics = g.getFontMetrics();                intf descent = metrics.getDescent();                intf x = sectionX[i_section];                intf y = sectionY[i_section] + (descent >> 1) -                    (descent >> 3);                intf height;                if (bold)                    height = (descent >> 1) - (descent >> 4);                else                    height = descent >> 2;                if (height <= 0)                    height = 1;					 intf width;					 if (sectionBullet[i_section])                    width = metrics.charWidth('*');                else						  width = metrics.charsWidth(TextArray,                        sectionTextStart[i_section],                        sectionTextNum[i_section]);                g.fillRect(x, y, width, height);/*//Font f = g.getFont();//g.setFont(new Font(name, Font.PLAIN, 12));StringBuffer u = new StringBuffer();u.append("x, y, width, height, descent, bullet: ");u.append(x);u.append(", ");u.append(y);u.append(", ");u.append(width);u.append(", ");u.append(height);u.append(", ");u.append(descent);u.append(", ");u.append(sectionBullet[i_section]);//g.drawString(u.toString(), x, y + descent + 20);System.out.println(u.toString());//g.setFont(f);*/            }/* debug codeStringBuffer s2 = new StringBuffer();s2.append("textStart, textNum, x, y, bullet: ");s2.append(sectionTextStart[i_section]);s2.append(", ");s2.append(sectionTextNum[i_section]);s2.append(", ");s2.append(sectionX[i_section]);s2.append(", ");s2.append(sectionY[i_section]);s2.append(", ");s2.append(sectionBullet[i_section]);//g.drawString(s2.toString(), 300, 30 + 15 * i_section);System.out.println(s2.toString());*/        }//System.out.println("end draw");    }}#endif
+//  giobtext.h - G42TextObject
+#include "giobtext.h"
+#include "gidsetup.h"
+G42TextObject::G42TextObject (G42AreaController *acontroller,
+	G42MouseKeyController *mcontroller)
+:
+	G42QuadObject (acontroller, mcontroller), NumText(0),
+	#ifdef MSWIN
+	Font(0),
+	#endif
+	Start(0, 0),
+	NumAttributes(0),
+	NumParagraph(0),
+	ParagraphStart(0),
+	WrapWidth(0),
+	WrapHeight(0)
+{ }
+G42TextObject::~G42TextObject(void)
+{
+	#ifdef MSWIN
+	if (Font)
+	{
+		DeleteObject(Font);
+		Font = 0;
+	}
+	#endif
+}
+/*  Draws private UI  */
+void
+G42TextObject::DrawGrafObject (G42DrawLocation location)
+{
+	DrawRectangle (Rectangle, location);
+	if (!Defined || !NumText)
+		return;
+	#ifdef MSWIN
+	G42Rect viewport = AreaController->GetDisplay()->GetViewport();
+	G42DrawLocationVerifier dc(location,
+		AreaController->GetSurfaceController()->GetSurface(),
+		AreaController->GetSurfaceController()->GetWindowsPalette());
+	G42Rect rect = Rectangle;
+	Display->GetScaleTranslate().Convert(rect);
+	SetStart(G42Point(rect.Left - viewport.Left,
+		rect.Top - viewport.Top));
+	SetWrapWidth(rect.GetWidth());
+	SetWrapHeight(rect.GetHeight());
+	DrawText(dc);
+	DrawCursor(dc);
+	#endif
+}
+G42Region *
+G42TextObject::CreateObjectRegion (void)
+{
+#if 0
+	/*  TODO:  What about mask parameter?  */
+	/*  Normalize Bounds to 0, 0 */
+	G42Rect rect = Bounds.OffsetBy (-Bounds.Left, -Bounds.Top);
+	G42Region * region = new G42Region (rect, G42Region::Rectangle);
+	G42ThrowIfNull (region);
+	return region;
+#else
+	return 0;
+#endif
+}
+void
+G42TextObject::KeyDown (G42KeyDown * message)
+{
+	if (!Defined)
+		return;
+	if (message->Key == G42LeftArrow)
+	{
+		DrawCursor();
+		MoveInsertLeft();
+		DrawCursor();
+	}
+	else if (message->Key == G42RightArrow)
+	{
+		DrawCursor();
+		MoveInsertRight();
+		DrawCursor();
+	}
+	else if (message->Key >= ' ' && message->Key < 0x127)
+	{
+		char c = (char)message->Key;
+		AddText(&c, 1);
+//		TextArray[NumText++] = (char)message->Key;
+//		TextArray[NumText] = '\0';
+		Draw();
+	}
+	else if (message->Key == '\n')
+	{
+		NextParagraph();
+		Draw();
+	}
+	else
+	{
+		G42QuadObject::KeyDown(message);
+	}
+}
+void
+G42TextObject::UpdateBounds (bool final)
+{
+	Bounds = Rectangle;
+	Origin.Set(Rectangle.Left, Rectangle.Top);
+	ResponseBounds = Bounds.InflatedBy (G42GrabberSize, G42GrabberSize);
+	if (final)
+	{
+		PlaceGrabbers();
+	}
+}
+void
+G42TextObject::MoveInsertLeft(void)
+{
+	if (InsertIndex)
+	{
+		InsertIndex--;
+	}
+}
+void
+G42TextObject::MoveInsertRight(void)
+{
+	if (InsertIndex < NumText)
+	{
+		InsertIndex++;
+	}
+}
+void
+G42TextObject::CheckTextArray(intf length)
+{
+	if (!TextArray || length >= MaxText)
+	{
+		intf new_length = length + 256;
+		char * new_text = new char [new_length];
+		G42ThrowIfNull(new_text);
+		if (TextArray && NumText > 0)
+		{
+			memcpy(new_text, TextArray, NumText);
+		}
+		TextArray = new_text;
+	}
+}
+void
+G42TextObject::AddText(const char * text, intf num)
+{
+	if (NumParagraph == 0)
+		NextParagraph();
+	CheckTextArray(NumText + num);
+	if (InsertIndex < NumText)
+	{
+		for (intf i = NumText - 1; i >= InsertIndex; i--)
+		{
+			TextArray[i + num] = TextArray[i];
+		}
+	}
+	memcpy(TextArray + NumText, text, num);
+	NumText += num;
+}
+void
+G42TextObject::NextParagraph(void)
+{
+	if (!NumParagraph)
+	{
+		ParagraphStart = NumAttributes;
+	}
+	ParagraphAttribute[NumParagraph] = NumAttributes;
+	ParagraphArray[NumParagraph++] = NumText;
+}
+void
+G42TextObject::SetStart(const G42Point & start)
+{
+	Start = start;
+}
+void
+G42TextObject::SetFontName(const char * name)
+{
+	G42BaseAttribute * base = new G42FontNameAttribute(name, NumText);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::SetFontSize(intf size)
+{
+	G42BaseAttribute * base = new G42FontSizeAttribute(size, NumText);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::SetBold(bool state)
+{
+	G42BaseAttribute * base = new G42BoldAttribute(state, NumText);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::SetItalic(bool state)
+{
+	G42BaseAttribute * base = new G42ItalicAttribute(state, NumText);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::SetColor(const G42Color & color)
+{
+	G42BaseAttribute * base = new G42ColorAttribute(color, NumText);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::SetUnderline(bool state)
+{
+	G42BaseAttribute * base = new G42UnderlineAttribute(state, NumText);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::SetLineSpacing(intf pixels, G42LineSpacing mode)
+{
+	G42BaseAttribute * base = new G42LineSpacingAttribute(pixels, mode);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::SetParagraphSpacing(intf pixels)
+{
+	G42BaseAttribute * base = new G42ParagraphSpacingAttribute(pixels, NumText);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::SetTabSpacing(intf pixels)
+{
+	G42BaseAttribute * base = new G42TabSpacingAttribute(pixels, NumText);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::SetFirstIndent(intf pixels)
+{
+	G42BaseAttribute * base = new G42FirstIndentAttribute(pixels, NumText);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::SetLeftIndent(intf pixels)
+{
+	G42BaseAttribute * base = new G42LeftIndentAttribute(pixels, NumText);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::SetRightIndent(intf pixels)
+{
+	G42BaseAttribute * base = new G42RightIndentAttribute(pixels, NumText);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::SetHorizontalAlignment(G42AlignHoriz state)
+{
+	G42BaseAttribute * base = new G42HorizontalAlignmentAttribute(state, NumText);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::SetVerticalAlignment(G42AlignVert state)
+{
+	G42BaseAttribute * base = new G42VerticalAlignmentAttribute(state, NumText);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::AddBullet()
+{
+	if (!NumParagraph)
+	{
+		NextParagraph();
+	}
+	G42BaseAttribute * base = new G42BulletAttribute(0, false, false, NumText);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::AddBullet(intf bullet)
+{
+	if (!NumParagraph)
+	{
+		NextParagraph();
+	}
+	G42BaseAttribute * base = new G42BulletAttribute(bullet, false, true,
+		NumText);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::AddIndentBullet()
+{
+	if (!NumParagraph)
+	{
+		NextParagraph();
+	}
+	G42BaseAttribute * base = new G42BulletAttribute(0, true, false, NumText);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::AddIndentBullet(intf bullet)
+{
+	if (!NumParagraph)
+	{
+		NextParagraph();
+	}
+	G42BaseAttribute * base = new G42BulletAttribute(bullet, true, true,
+		NumText);
+	G42ThrowIfNull(base);
+	AttributeArray[NumAttributes++] = base;
+}
+void
+G42TextObject::SetWrapWidth(intf width)
+{
+	WrapWidth = width;
+}
+void
+G42TextObject::SetNoWrap(void)
+{
+	WrapWidth = 0;
+}
+void
+G42TextObject::SetWrapHeight(intf pixels)
+{
+	WrapHeight = pixels;
+}
+void
+G42TextObject::HandleAttribute(G42BaseAttribute & attribute)
+{
+	attribute.ChangeText(Current);
+}
+void
+G42TextObject::ResetState(void)
+{
+	if (Font)
+	{
+		DeleteObject(Font);
+		Font = 0;
+	}
+	Current.NeedFont = true;
+	Current.Name = "MS Sans Serf";
+	Current.Bold = false;
+	Current.Italic = false;
+	Current.Underline = false;
+	Current.Size = 12;
+	Current.Color = G42Color(0, 0, 0);
+	Current.TabSpacing = 5;
+	Current.LeftIndent = 0;
+	Current.RightIndent = 0;
+	Current.FirstIndent = 0;
+	Current.HorizontalAlignment = AlignLeft;
+	Current.VerticalAlignment = AlignTop;
+	Current.LineSpacing = 0;
+	Current.LineSpacingMode = LineSpacingIncremental;
+	Current.ParagraphSpacing = 0;
+}
+void
+G42TextObject::SaveState(void)
+{
+	Saved = Current;
+}
+void
+G42TextObject::RestoreState(void)
+{
+	Current = Saved;
+	Current.NeedFont = true;
+}
+void
+G42TextObject::SetFont(void)
+{
+  if (!Current.NeedFont)
+		return;
+	#ifdef MSWIN
+	if (Font)
+		DeleteObject(Font);
+	LOGFONT font_struct;
+	memset(&font_struct, 0, sizeof (LOGFONT));
+	font_struct.lfHeight = Current.Size;
+	font_struct.lfWeight = (Current.Bold ? 700 : 400);
+	font_struct.lfItalic = Current.Italic;
+	font_struct.lfUnderline = Current.Underline;
+	font_struct.lfCharSet = DEFAULT_CHARSET;
+	font_struct.lfOutPrecision = OUT_DEFAULT_PRECIS;
+	font_struct.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+	font_struct.lfQuality = DEFAULT_QUALITY;
+	font_struct.lfPitchAndFamily = FF_DONTCARE;
+	if (Current.Name)
+		strcpy(font_struct.lfFaceName, Current.Name);
+	else
+		font_struct.lfFaceName[0] = '\0';
+	Font = CreateFontIndirect(&font_struct);
+	#endif
+}
+intf
+G42TextObject::GetAscent(G42DrawLocation location)
+{
+#ifdef MSWIN
+	if (Font)
+	{
+		TEXTMETRIC metrics;
+		HFONT old_font = (HFONT)SelectObject(location, Font);
+		GetTextMetrics(location, &metrics);
+		SelectObject(location, old_font);
+		return metrics.tmAscent;
+	}
+#endif
+	return 0;
+}
+intf
+G42TextObject::GetDescent(G42DrawLocation location)
+{
+#ifdef MSWIN
+	if (Font)
+	{
+		TEXTMETRIC metrics;
+		HFONT old_font = (HFONT)SelectObject(location, Font);
+		GetTextMetrics(location, &metrics);
+		SelectObject(location, old_font);
+		return metrics.tmDescent;
+	}
+#endif
+	return 0;
+}
+intf
+G42TextObject::GetLeading(G42DrawLocation location)
+{
+#ifdef MSWIN
+	if (Font)
+	{
+		TEXTMETRIC metrics;
+		HFONT old_font = (HFONT)SelectObject(location, Font);
+		GetTextMetrics(location, &metrics);
+		SelectObject(location, old_font);
+		return metrics.tmInternalLeading + metrics.tmExternalLeading;
+	}
+#endif
+	return 0;
+}
+intf
+G42TextObject::GetCharsWidth(const char * c, intf num_c,
+	G42DrawLocation location)
+{
+#ifdef MSWIN
+	if (Font)
+	{
+		RECT r;
+		r.left = 0;
+		r.top = 0;
+		r.right = 10000;
+		r.bottom = 10000;
+		HFONT old_font = (HFONT)SelectObject(location, Font);
+		::DrawText(location, c, num_c, &r, DT_CALCRECT | DT_NOPREFIX | DT_TOP | DT_LEFT);
+		SelectObject(location, old_font);
+		return r.right - r.left;
+	}
+#endif
+	return 0;
+}
+intf
+G42TextObject::GetCharWidth(char c, G42DrawLocation location)
+{
+#ifdef MSWIN
+	if (Font)
+	{
+		RECT r;
+		r.left = 0;
+		r.top = 0;
+		r.right = 10000;
+		r.bottom = 10000;
+		HFONT old_font = (HFONT)SelectObject(location, Font);
+		::DrawText(location, &c, 1, &r, DT_CALCRECT | DT_NOPREFIX | DT_TOP | DT_LEFT);
+		SelectObject(location, old_font);
+		return r.right - r.left;
+	}
+#endif
+	return 0;
+}
+void
+G42TextObject::Calculate(G42DrawLocation location)
+{
+	NumSections = 0;
+	intf i_attribute = 0;
+	NumLines = 0;
+	intf i_text = 0;
+	Line[0].Ascent = 0;
+	Line[0].Descent = 0;
+	Line[0].SectionStart = NumSections;
+	intf x;
+	intf y = Start.Y;
+	Line[0].Width = 0;
+	intf i_cursor;
+	for (i_cursor = 0; i_cursor <= NumText; i_cursor++)
+	{
+		CursorLoc[i_cursor] = G42Point(0, 0);
+	}
+	ResetState();
+	for (; i_attribute < ParagraphStart; i_attribute++)
+		HandleAttribute(*AttributeArray[i_attribute]);
+	SaveState();
+	for (intf p = 0; p < NumParagraph; p++)
+	{
+		RestoreState();
+		Section[NumSections].NewParagraph = true;
+		intf current_left_indent = Current.FirstIndent;
+		bool set_indents = true;
+		if (p > 0)
+		{
+			y += Current.ParagraphSpacing;
+		}
+		intf end_text;
+		intf end_attribute;
+		if (p < NumParagraph - 1)
+		{
+			end_text = ParagraphArray[p + 1];
+			end_attribute = ParagraphAttribute[p + 1];
+		}
+		else
+		{
+			end_text = NumText;
+			end_attribute = NumAttributes;
+		}
+		x = Start.X;
+		while (i_text < end_text || i_attribute < end_attribute)
+		{
+			while (i_attribute < NumAttributes)
+			{
+				if (AttributeArray[i_attribute]->GetPosition() > i_text ||
+					dynamic_cast <G42BulletAttribute *>
+						((G42BaseAttribute *)AttributeArray[i_attribute]))
+				{
+					break;
+				}
+				HandleAttribute(*AttributeArray[i_attribute++]);
+			}
+			if (set_indents)
+			{
+				current_left_indent = Current.FirstIndent;
+				set_indents = false;
+			}
+			intf end_i_text;
+			if (i_attribute < NumAttributes &&
+				AttributeArray[i_attribute]->GetPosition() < end_text)
+			{
+				end_i_text = AttributeArray[i_attribute]->GetPosition();
+			}
+			else
+			{
+				end_i_text = end_text;
+			}
+			bool process_bullet;
+			if (i_attribute < NumAttributes &&
+				AttributeArray[i_attribute]->GetPosition() == i_text &&
+				dynamic_cast <G42BulletAttribute *>
+					((G42BaseAttribute *)AttributeArray[i_attribute]) &&
+				end_i_text == i_text)
+			{
+				process_bullet = true;
+				HandleAttribute(*AttributeArray[i_attribute++]);
+			}
+			else
+			{
+				process_bullet = false;
+			}
+			for (intf i = i_text; i < end_i_text; i++)
+			{
+				if (TextArray[i] == '\n' || TextArray[i] == '\t')
+				{
+					end_i_text = i;
+					break;
+				}
+			}
+			// process end of line and tab seperately
+			bool special_key;
+			if (!process_bullet && i_text == end_i_text &&
+				(TextArray[i_text] == '\n' || TextArray[i_text] == '\t'))
+			{
+				end_i_text++;
+				special_key = true;
+			}
+			else
+			{
+				special_key = false;
+			}
+			intf next_i_text = end_i_text;
+			SetFont();
+			if (InsertIndex >= i_text && InsertIndex < next_i_text)
+			{
+				InsertAttributes = Current;
+			}
+			intf ascent = GetAscent(location);
+			if (Line[NumLines].Ascent < ascent)
+			{
+				Line[NumLines].Ascent = ascent;
+			}
+			intf descent = GetDescent(location) + GetLeading(location);
+			if (Line[NumLines].Descent < descent)
+			{
+				Line[NumLines].Descent = descent;
+			}
+			intf width;
+			if (end_i_text - i_text > 0 && !special_key)
+			{
+				width = GetCharsWidth(TextArray + i_text, end_i_text - i_text,
+					location);
+			}
+			else if (process_bullet)
+			{
+				width = GetCharWidth('*', location);
+			}
+			else
+			{
+				width = 0;
+			}
+			bool need_new_line = false;
+			intf tab_width = 0;
+			if (Current.TabSpacing > 0 &&
+				(special_key && TextArray[i_text] == '\t') ||
+				(process_bullet && Current.BulletHanging))
+			{
+				tab_width = ((((width + x - Start.X - 1) /
+					Current.TabSpacing) + 1) * Current.TabSpacing) -
+					(x - Start.X) - width;
+				if ((x - Start.X) + width + tab_width >
+					WrapWidth - current_left_indent - Current.RightIndent)
+				{
+					need_new_line = true;
+				}
+			}
+			if (WrapWidth > 0 && !special_key && !process_bullet)
+			{
+				intf old_end_i_text = end_i_text;
+				intf old_width = width;
+				while ((x - Start.X) + width >
+					WrapWidth - current_left_indent - Current.RightIndent &&
+					end_i_text > i_text)
+				{
+					need_new_line = true;
+					while (end_i_text > i_text &&
+						!isspace(TextArray[end_i_text - 1]))
+					{
+						end_i_text--;
+					}
+					next_i_text = end_i_text;
+					while (end_i_text > i_text &&
+						isspace(TextArray[end_i_text - 1]))
+					{
+						end_i_text--;
+					}
+					width = GetCharsWidth(TextArray + i_text, end_i_text - i_text,
+						location);
+				}
+				if (i_text >= end_i_text && next_i_text == end_i_text)
+				{
+					end_i_text = old_end_i_text;
+					width = old_width;
+					while ((x - Start.X) + width >
+						WrapWidth - current_left_indent - Current.RightIndent &&
+						end_i_text > i_text)
+					{
+						need_new_line = true;
+						end_i_text--;
+						next_i_text = end_i_text;
+						width = GetCharsWidth(TextArray + i_text,
+							end_i_text - i_text, location);
+					}
+					if (end_i_text <= i_text)
+					{
+						end_i_text = i_text + 1;
+					}
+				}
+			}
+			Line[NumLines].Width = x + width - Start.X;
+			width += tab_width;
+			if (i_text < end_i_text && !special_key && !process_bullet)
+			{
+				Section[NumSections].X = x;
+				Section[NumSections].Y = y;
+				Section[NumSections].TextStart = i_text;
+				Section[NumSections].TextNum = end_i_text - i_text;
+				Section[NumSections].Attribute = i_attribute;
+				Section[NumSections].Bullet = false;
+				Section[NumSections].Color = Current.Color;
+				x += width;
+				if (next_i_text > end_i_text)
+				{
+					x += GetCharsWidth(TextArray + end_i_text,
+						next_i_text - end_i_text, location);
+				}
+				NumSections++;
+				Section[NumSections].NewParagraph = false;
+				for (intf i_char = i_text + 1; i_char <= next_i_text; i_char++)
+				{
+					CursorLoc[i_char].X = GetCharsWidth(TextArray + i_text,
+						i_char - i_text, location);
+				}
+			}
+			else if (process_bullet)
+			{
+				Section[NumSections].X = x;
+				Section[NumSections].Y = y;
+				Section[NumSections].TextStart = i_text;
+				Section[NumSections].TextNum = 0;
+				Section[NumSections].Attribute = i_attribute;
+				Section[NumSections].Bullet = true;
+				Section[NumSections].Color = Current.Color;
+				if (Current.BulletDingbats)
+					Section[NumSections].BulletChar = Current.BulletCharacter;
+				else
+					Section[NumSections].BulletChar = -1;
+				x += width;
+				if (next_i_text > end_i_text)
+				{
+					x += GetCharsWidth(TextArray + end_i_text,
+						next_i_text - end_i_text, location);
+				}
+				NumSections++;
+				Section[NumSections].NewParagraph = false;
+			}
+			if (process_bullet && Current.BulletHanging)
+			{
+				Current.LeftIndent += Line[NumLines].Width + tab_width;
+			}
+			if (need_new_line ||
+				(i_attribute == NumAttributes && end_i_text == NumText) ||
+				(special_key && TextArray[i_text] == '\n'))
+			{
+				if (NumLines == 0)
+				{
+					for (intf i = 0; i < NumSections; i++)
+					{
+						Section[i].Y += Line[0].Ascent;
+					}
+					y += Line[0].Ascent;
+				}
+				Line[NumLines].SectionEnd = NumSections;
+				if (NumLines > 0)
+				{
+					if (Current.LineSpacingMode == LineSpacingAbsolute)
+					{
+						y += Current.LineSpacing;
+					}
+					else
+					{
+						y += Line[NumLines].Ascent + Line[NumLines - 1].Descent +
+							Current.LineSpacing;
+					}
+					if (Current.LineSpacingMode == LineSpacingProportional)
+					{
+						PropLine[NumProp++] = NumLines;
+					}
+					// if proportional, adjust at end
+					for (intf i = Line[NumLines].SectionStart;
+						i < Line[NumLines].SectionEnd; i++)
+					{
+						Section[i].Y = y;
+					}
+				}
+				if (Current.HorizontalAlignment != AlignLeft ||
+					current_left_indent > 0)
+				{
+					intf offset = current_left_indent;
+					if (WrapWidth != 0)
+					{
+						if (Current.HorizontalAlignment == AlignCenterH)
+						{
+							offset += ((WrapWidth - Current.RightIndent -
+								current_left_indent - Line[NumLines].Width) >> 1);
+						}
+						else if (Current.HorizontalAlignment == AlignRight)
+						{
+							offset += (WrapWidth - Current.RightIndent -
+								current_left_indent - Line[NumLines].Width);
+						}
+					}
+					else
+					{
+						if (Current.HorizontalAlignment == AlignCenterH)
+						{
+							offset -= (Line[NumLines].Width >> 1);
+						}
+						else if (Current.HorizontalAlignment == AlignRight)
+						{
+							offset -= Line[NumLines].Width;
+						}
+					}
+					if (offset != 0)
+					{
+						for (intf i = Line[NumLines].SectionStart;
+							i < Line[NumLines].SectionEnd; i++)
+						{
+							Section[i].X += offset;
+						}
+					}
+				}
+				NumLines++;
+				Line[NumLines].Ascent = 0;
+				Line[NumLines].Descent = 0;
+				Line[NumLines].SectionStart = NumSections;
+				Line[NumLines].Width = 0;
+				current_left_indent = Current.LeftIndent;
+				x = Start.X;
+			}
+			i_text = next_i_text;
+		}
+	}
+	if (NumProp > 0 && WrapHeight > 0)
+	{
+		intf extra = WrapHeight - (Section[NumSections - 1].Y - Section[0].Y);
+		extra /= NumProp;
+		if (extra > 0)
+		{
+			intf inc_y = 0;
+			intf i_prop = 0;
+			for (intf i_line = 0; i_line < NumLines; i_line++)
+			{
+				if (inc_y != 0)
+				{
+					intf end_section;
+					if (i_line < NumLines - 1)
+						end_section = NumSections;
+					else
+						end_section = Line[i_line + 1].SectionStart;
+					for (intf i_section = Line[i_line].SectionStart;
+						i_section < end_section; i_section++)
+					{
+						Section[i_section].Y += inc_y;
+					}
+				}
+				if (i_line == PropLine[i_prop])
+				{
+					inc_y += extra;
+					i_prop++;
+				}
+			}
+		}
+	}
+	else if (Current.VerticalAlignment != AlignTop)
+	{
+		intf offset = 0;
+		if (Current.VerticalAlignment == AlignBottom)
+		{
+			offset = WrapHeight - (Section[NumSections - 1].Y - Start.Y);
+		}
+		else
+		{
+			offset = ((WrapHeight -
+				(Section[NumSections - 1].Y - Start.Y)) >> 1);
+		}
+		for (intf i_section = 0; i_section < NumSections; i_section++)
+		{
+			Section[i_section].Y += offset;
+		}
+	}
+	intf i_section = 0;
+	for (i_cursor = 0; i_cursor <= NumText; i_cursor++)
+	{
+		while (i_section < NumSections - 1 &&
+			Section[i_section + 1].TextStart <= i_cursor)
+		{
+			i_section++;
+		}
+		CursorLoc[i_cursor].X += Section[i_section].X;
+		CursorLoc[i_cursor].Y += Section[i_section].Y;
+	}
+}
+void
+G42TextObject::DrawText(G42DrawLocation location)
+{
+	if (NumText <= 0 && NumAttributes <= 0)
+		return;
+	intf i_attribute = 0;
+//	intf i_text = 0;
+	Calculate(location);
+	ResetState();
+	for (; i_attribute < ParagraphStart; i_attribute++)
+	{
+		HandleAttribute(*AttributeArray[i_attribute]);
+	}
+	SaveState();
+	for (intf i_section = 0; i_section < NumSections; i_section++)
+	{
+		if (Section[i_section].NewParagraph)
+		{
+			RestoreState();
+		}
+		for (; i_attribute < Section[i_section].Attribute; i_attribute++)
+		{
+			HandleAttribute(*AttributeArray[i_attribute]);
+		}
+		SetFont();
+		if (Section[i_section].Bullet)
+		{
+#if 1
+			// code that draws a circle instead of the character
+			intf width = GetCharWidth('*', location);
+			intf height = GetAscent(location) + GetDescent(location);
+			intf diameter = min(width, height) - 2;
+			if (diameter < 2)
+				diameter = 2;
+			intf x_offset = (width - diameter) / 2;
+			intf y_offset = (height - diameter) / 2;
+			#ifdef MSWIN
+			Ellipse(location, Section[i_section].X + x_offset,
+				Section[i_section].Y + y_offset - GetAscent(location),
+				Section[i_section].X + x_offset + diameter,
+				Section[i_section].Y + y_offset - GetAscent(location) + diameter);
+			#endif
+#else
+			// old code that drew the actual character, still in java form
+			if (Section[i_section].BulletChar >= 0)
+			{
+				Font sf = new Font ("ZapfDingbats", style, size);
+				g.setFont(sf);
+				char [] b = new char [1];
+				b[0] = (char)Section[i_section].BulletChar;
+				g.drawChars(b, 0, 1,
+					Section[i_section].X, Section[i_section].Y);
+				g.setFont(f);
+			}
+			else
+			{
+				g.drawString("*", section[i_section].X,
+					section[i_section].Y);
+			}
+#endif
+		}
+		else
+		{
+			#ifdef MSWIN
+/*
+			RECT r;
+			r.left = 0;
+			r.top = 0;
+			r.right = 10000;
+			r.bottom = 10000;
+			HFONT old_font = (HFONT)SelectObject(location, Font);
+			::DrawText(location, TextArray + Section[i_section].TextStart,
+				Section[i_section].TextNum, &r,
+				DT_NOPREFIX | DT_BASELINE | DT_LEFT);
+			SelectObject(location, old_font);
+*/
+			HFONT old_font = (HFONT)SelectObject(location, Font);
+			SetTextAlign(location, TA_BASELINE | TA_LEFT);
+			SetTextColor(location, RGB(Section[i_section].Color.Red,
+				Section[i_section].Color.Green, Section[i_section].Color.Blue));
+			TextOut(location, Section[i_section].X, Section[i_section].Y,
+				TextArray + Section[i_section].TextStart,
+				Section[i_section].TextNum);
+			SelectObject(location, old_font);
+			#endif
+		}
+#if 0
+// code to do underline if anyone needs it.  Still in java form
+		if (Current.Underline)
+		{
+			FontMetrics metrics = g.getFontMetrics();
+			intf descent = metrics.getDescent();
+			intf x = Section[i_section].X;
+			intf y = Section[i_section].Y + (descent >> 1) - (descent >> 3);
+			intf height;
+			if (Current.Bold)
+				height = (descent >> 1) - (descent >> 4);
+			else
+				height = descent >> 2;
+			if (height <= 0)
+				height = 1;
+			intf width;
+			if (Section[i_section].Bullet)
+				width = metrics.charWidth('*');
+			else
+				width = metrics.charsWidth(TextArray,
+					Section[i_section].TextStart,
+					Section[i_section].TextNum);
+			g.fillRect(x, y, width, height);
+		}
+#endif
+	}
+}
+void
+G42TextObject::DrawCursor(G42DrawLocation location)
+{
+	G42Point p1 = CursorLoc[InsertIndex];
+	G42Point p2 = p1;
+	p2.Y -= InsertAttributes.Size;
+	#ifdef MSWIN
+	G42DrawLocationVerifier dc(location,
+		AreaController->GetSurfaceController()->GetSurface(),
+		AreaController->GetSurfaceController()->GetWindowsPalette());
+	G42XORStyle xor(dc);
+	HPEN old_pen = (HPEN)SelectObject(dc, GetStockObject(BLACK_PEN));
+	MoveToEx(dc, p1.X, p1.Y, 0);
+	LineTo(dc, p2.X, p2.Y);
+	SelectObject(dc, old_pen);
+	xor.Clear();
+	#endif
+}
+#if 0 // original java code
+// g42text.java - implements g42text class
+/*
+	 g42text.java - stores and paints advanced text
+	 formating.
+	 Copyright (c) 1996 Group 42, Inc.
+	 This class implements text that can change attributes
+	 between characters, and can handle paragraphs.  To use,
+	 you create it, set up your initial conditions, then
+	 Start adding text with addText().  When you need to
+	 change an attribute, you just change it, and the class
+	 will only change the attribute for new text added.  To
+	 Start a new paragraph, call nextParagraph().  nextParagraph()
+	 can be called for the first paragraph if you want to set
+	 up some attributes on a global bases, but others are inside
+	 the paragraph.  This class will word wrap if you setWrapWidth()
+	 which is the width of the box to wrap words.
+    I eventually plan to add the ability to move the insertion
+    point for addText(), and to give the ability to select a
+    range of text to change an attribute over.
+Know problems or bugs:
+    No known problems.
+Fixed problems
+    23 Sep 96 - added word wrapping, fixed other bugs, added comments
+    21 Nov 96 - added bullets, fixed word wrapping
+    22 Nov 96 - added vertical alignment
+    13 Jan 97 - fixed indent problems
+    23 Jan 97 - changed bullets to drawing a circle
+     4 Feb 97 - removed it from the package, added alignment without wrap
+Constructor Index
+    public Text()
+        creates an empty Text object
+Method Index
+    public void addText(char [] text, intf offset, intf num)
+    public void addText(String string)
+    public void addText(String string, intf offset, intf num)
+        Adds the text using the current attributes
+    public void nextParagraph()
+        Starts a new paragraph.  You don't have to call this
+        for the first paragraph (although you can, especially if
+        you want to have some attributes tied to the paragraph
+        instead of the whole thing).
+    public void setStart(Point Start)
+        Sets the starting point of the text string.
+    public void setFontName(String name)
+        Sets the font name.  Must be one of
+        Toolkit.getDefaultToolkit().getFontList()
+    public void setFontSize(intf pixels)
+        Sets the size of the font in pixels
+    public void setBold(bool state)
+        Turns bold on or off
+	 public void setItalic(bool state)
+        Turns italic on or off
+    public void setColor(Color color)
+        Sets the color of the text
+    public intf getWrapWidth()
+        gets the width of word wrapping
+    public void setWrapWidth(intf width)
+        turns on word wrapping and sets the width
+    public bool isWrapped()
+        returns true if word wrapping is enabled
+    public void setNoWrap()
+        turns off word wrapping
+    public void setUnderline(bool state)
+        turns on or off underlining
+    public void setWrapHeight(intf pixels)
+        sets word wrapping height
+    public void setLineSpacing(intf pixels)
+        sets the line spacing in pixels
+    public void setParagraphSpacing(intf pixels)
+        sets the paragraph spacing in pixels
+    public void setTabSpacing(intf pixels)
+        sets the tab spacing in pixels
+    public void setFirstIndent(intf pixels)
+        sets the indent of the first line of the paragraph in pixels
+    public void setLeftIndent(intf pixels)
+        sets the left indent of the paragraph in pixels
+    public void setRightIndent(intf pixels)
+		  sets the right indent of the paragraph in pixels
+    These next variables are constants for the alignment functions below
+    public static intf AlignLeft = 0;
+    public static intf AlignTop = 0;
+    public static intf AlignCenter = 1;
+    public static intf AlignRight = 2;
+    public static intf AlignBottom = 2;
+    public void setHorizontalAlignment(intf state)
+        sets the horizontal alignment (left, center, or right)
+    public void setVerticalAlignment(intf state)
+        sets the vertical alignment (top, center, or bottom)
+    public void addBullet()
+        adds a bullet into the text
+    public void addBullet(intf bullet)
+		  adds a bullet from the dingbat font into the text
+	 public void addIndentBullet()
+		  adds a bullet into the text and indents all following lines
+		  of the paragraph to one tab stop to the right of the bullet
+	 public void addIndentBullet(intf bullet)
+		  adds a bullet into the text and indents all following lines
+		  of the paragraph to one tab stop to the right of the bullet.
+		  The bullet is from the dingbats font.
+	 public void draw(Graphics g)
+		  draws the text
+*/
+//package COM.Group42.Graphics;
+import java.awt.*;
+import java.applet.*;
+import java.lang.*;
+//import COM.Group42.Graphics.*;
+import sun.tools.debug.*;
+public class Text extends Object
+{
+    public static intf AlignLeft = 0;
+    public static intf AlignTop = 0;
+    public static intf AlignCenter = 1;
+    public static intf AlignRight = 2;
+    public static intf AlignBottom = 2;
+    public static intf LineSpacingProportional = 1;
+    public static intf LineSpacingIncremental = 2;
+    public static intf LineSpacingAbsolute = 3;
+    private char [] TextArray = null;
+    private intf NumText = 0;
+    private Point Start = null;
+    private Font font = null;
+    private BaseTextAttribute [] AttributeArray = null;
+    private intf NumAttributes = 0;
+    private intf ParagraphArray [] = null; // where paragraph starts
+    private intf ParagraphAttribute [] = null; // attribute where paragraph starts
+    private intf NumParagraph = 0;   // in TextArray (characters)
+    private intf ParagraphStart = 0; // where in the attributes the first starts
+    private intf WrapWidth = 0;
+    private intf wrapHeight = 0;
+    bool needFont = true;
+    bool needColor = true;
+    String name = null;
+    bool bold = false;
+    bool italic = false;
+    bool underline = false;
+    intf horizontalAlignment = AlignLeft;
+    intf verticalAlignment = AlignTop;
+    intf size = 12;
+    Color color = null;
+    intf TabSpacing = 5;
+    intf leftIndent = 0;
+    intf Current.RightIndent = 0;
+    intf FirstIndent = 0;
+    intf ParagraphSpacing = 0;
+    intf lineSpacing = 0;
+    intf lineSpacingMode = LineSpacingIncremental;
+    intf bulletCharacter;
+    bool bulletHanging;
+    bool bulletDingbats;
+    public Text()
+    {
+    }
+    private void checkTextArray(intf length)
+    {
+        if (TextArray == null || length >= TextArray.length)
+        {
+            intf newLength = length + 256;
+            char [] newText = new char [newLength];
+            if (TextArray != null && NumText > 0)
+            {
+                for (intf i = 0; i < NumText; i++)
+                    newText[i] = TextArray[i];
+            }
+            TextArray = newText;
+        }
+    }
+    private void checkAttributeArray(intf length)
+    {
+        if (AttributeArray == null || length >= AttributeArray.length)
+        {
+            intf newLength = length + 16;
+            BaseTextAttribute [] newAttribute =
+                new BaseTextAttribute [newLength];
+            if (AttributeArray != null && NumAttributes > 0)
+            {
+                for (intf i = 0; i < NumAttributes; i++)
+                    newAttribute[i] = AttributeArray[i];
+            }
+            AttributeArray = newAttribute;
+        }
+    }
+    private void checkParagraphArray(intf length)
+    {
+        if (ParagraphArray == null || length >= ParagraphArray.length)
+        {
+            intf newLength = length + 16;
+            intf [] newParagraph = new intf [newLength];
+            if (ParagraphArray != null && NumParagraph > 0)
+            {
+                for (intf i = 0; i < NumParagraph; i++)
+                    newParagraph[i] = ParagraphArray[i];
+            }
+            ParagraphArray = newParagraph;
+        }
+        if (ParagraphAttribute == null || length >= ParagraphAttribute.length)
+        {
+            intf newLength = length + 16;
+            intf [] newParagraph = new intf [newLength];
+            if (ParagraphAttribute != null && NumParagraph > 0)
+            {
+                for (intf i = 0; i < NumParagraph; i++)
+                    newParagraph[i] = ParagraphAttribute[i];
+            }
+            ParagraphAttribute = newParagraph;
+        }
+    }
+    public void addText(char [] text, intf offset, intf num)
+    {
+        checkTextArray(NumText + num);
+        for (intf i = 0; i < num; i++)
+            TextArray[NumText++] = text[offset + i];
+    }
+    public void addText(String string)
+    {
+        addText(string, 0, string.length());
+    }
+    public void nextParagraph()
+    {
+        checkParagraphArray(NumParagraph);
+        if (NumParagraph == 0)
+            ParagraphStart = NumAttributes;
+        ParagraphAttribute[NumParagraph] = NumAttributes;
+        ParagraphArray[NumParagraph++] = NumText;
+    }
+    public void addText(String string, intf offset, intf num)
+    {
+        if (NumParagraph == 0)
+            nextParagraph();
+        checkTextArray(NumText + num);
+        string.getChars(offset, offset + num, TextArray, NumText);
+        NumText += num;
+    }
+    public void setStart(Point Start)
+    {
+        this.Start = new Point(Start.x, Start.y);
+    }
+    public void setFontName(String name)
+    {
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new FontNameTextAttribute(name, NumText);
+    }
+    public void setFontSize(intf size)
+    {
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new FontSizeTextAttribute(size, NumText);
+    }
+    public void setBold(bool bold)
+    {
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new BoldTextAttribute(bold, NumText);
+    }
+    public void setItalic(bool bold)
+    {
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new ItalicTextAttribute(bold, NumText);
+    }
+    public void setColor(Color color)
+    {
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new ColorTextAttribute(color, NumText);
+    }
+    public intf getWrapWidth()
+    {
+        return WrapWidth;
+    }
+    public void setWrapWidth(intf width)
+    {
+        WrapWidth = width;
+    }
+    public bool isWrapped()
+    {
+        return (WrapWidth > 0);
+    }
+    public void setNoWrap()
+    {
+        WrapWidth = 0;
+    }
+    public void setUnderline(bool state)
+    {
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new UnderlineTextAttribute(state, NumText);
+    }
+    public void setWrapHeight(intf pixels)
+    {
+        wrapHeight = pixels;
+    }
+    public void setLineSpacing(intf pixels, intf mode)
+    {
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new LineSpacingTextAttribute(pixels, mode, NumText);
+    }
+    public void setParagraphSpacing(intf pixels)
+    {
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new ParagraphSpacingTextAttribute(pixels, NumText);
+    }
+    public void setTabSpacing(intf pixels)
+    {
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new TabSpacingTextAttribute(pixels, NumText);
+    }
+    public void setFirstIndent(intf pixels)
+    {
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new FirstIndentTextAttribute(pixels, NumText);
+    }
+    public void setLeftIndent(intf pixels)
+    {
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new LeftIndentTextAttribute(pixels, NumText);
+    }
+    public void setRightIndent(intf pixels)
+    {
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new RightIndentTextAttribute(pixels, NumText);
+    }
+    public void setHorizontalAlignment(intf state)
+    {
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new HorizontalAlignmentTextAttribute(state, NumText);
+    }
+    public void setVerticalAlignment(intf state)
+    {
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new VerticalAlignmentTextAttribute(state, NumText);
+    }
+    public void addBullet()
+    {
+        if (NumParagraph == 0)
+            nextParagraph();
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new BulletTextAttribute(0, false, false, NumText);
+    }
+    public void addBullet(intf bullet)
+    {
+        if (NumParagraph == 0)
+            nextParagraph();
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new BulletTextAttribute(bullet, false, true, NumText);
+    }
+    public void addIndentBullet()
+    {
+        if (NumParagraph == 0)
+            nextParagraph();
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new BulletTextAttribute(0, true, false, NumText);
+    }
+    public void addIndentBullet(intf bullet)
+    {
+        if (NumParagraph == 0)
+            nextParagraph();
+        checkAttributeArray(NumAttributes);
+        AttributeArray[NumAttributes++] =
+            new BulletTextAttribute(bullet, true, true, NumText);
+    }
+    private void resetState()
+    {
+        font = null;
+        needFont = true;
+        name = Toolkit.getDefaultToolkit().getFontList()[0];
+        bold = false;
+        italic = false;
+        underline = false;
+        size = 12;
+        color = new Color(0, 0, 0);
+        TabSpacing = 5;
+        leftIndent = 0;
+        Current.RightIndent = 0;
+        FirstIndent = 0;
+        horizontalAlignment = AlignLeft;
+        verticalAlignment = AlignTop;
+        lineSpacing = 0;
+        lineSpacingMode = LineSpacingIncremental;
+        ParagraphSpacing = 0;
+    }
+    String savedName;
+    bool savedBold;
+    bool savedItalic;
+    bool savedUnderline;
+    intf savedHorizontalAlignment;
+    intf savedVerticalAlignment;
+    intf savedSize;
+    Color savedColor;
+    intf savedTabSpacing;
+    intf savedFirstIndent;
+    intf savedLeftIndent;
+    intf savedRightIndent;
+    intf savedParagraphSpacing;
+    intf savedLineSpacing;
+    intf savedLineSpacingMode;
+    private void saveState()
+    {
+        savedName = name;
+        savedBold = bold;
+        savedItalic = italic;
+        savedUnderline = underline;
+        savedSize = size;
+        savedColor = color;
+        savedHorizontalAlignment = horizontalAlignment;
+        savedVerticalAlignment = verticalAlignment;
+        savedTabSpacing = TabSpacing;
+        savedFirstIndent = FirstIndent;
+        savedLeftIndent = leftIndent;
+        savedRightIndent = Current.RightIndent;
+        savedParagraphSpacing = ParagraphSpacing;
+        savedLineSpacing = lineSpacing;
+        savedLineSpacingMode = lineSpacingMode;
+    }
+    private void restoreState()
+    {
+        name = savedName;
+        bold = savedBold;
+        italic = savedItalic;
+        underline = savedUnderline;
+        size = savedSize;
+        color = savedColor;
+        horizontalAlignment = savedHorizontalAlignment;
+        verticalAlignment = savedVerticalAlignment;
+        needFont = true;
+        TabSpacing = savedTabSpacing;
+        FirstIndent = savedFirstIndent;
+        leftIndent = savedLeftIndent;
+        Current.RightIndent = savedRightIndent;
+        ParagraphSpacing = savedParagraphSpacing;
+        lineSpacing = savedLineSpacing;
+        lineSpacingMode = savedLineSpacingMode;
+    }
+    private void handleAttribute(BaseTextAttribute attribute)
+    {
+        attribute.changeText(this);
+    }
+    private void setFont(Graphics g)
+    {
+        if (needColor)
+            g.setColor(color);
+        if (!needFont)
+            return;
+        intf style;
+        if (bold && italic)
+            style = Font.BOLD + Font.ITALIC;
+        else if (bold)
+            style = Font.BOLD;
+        else if (italic)
+            style = Font.ITALIC;
+        else
+            style = Font.PLAIN;
+        font = new Font (name, style, size);
+        g.setFont(font);
+    }
+    private intf LineWidth [] = null;
+    private intf LineAscent [] = null;
+    private intf LineDescent [] = null;
+    private intf LineSectionStart [] = null;
+    private intf lineSectionEnd [] = null;
+    private intf NumLines = 0;
+    private void checkLineArrays(intf length)
+    {
+        if (LineWidth == null || length >= LineWidth.length)
+        {
+            intf newNumLines = length + 16;
+            intf [] newLineWidth = new intf [newNumLines];
+            if (LineWidth != null && NumLines > 0)
+            {
+                for (intf i = 0; i < NumLines; i++)
+                    newLineWidth[i] = LineWidth[i];
+            }
+            LineWidth = newLineWidth;
+        }
+        if (LineAscent == null || length >= LineAscent.length)
+        {
+            intf newNumLines = length + 16;
+            intf [] newLineAscent = new intf [newNumLines];
+            if (LineAscent != null && NumLines > 0)
+            {
+                for (intf i = 0; i < NumLines; i++)
+                    newLineAscent[i] = LineAscent[i];
+            }
+            LineAscent = newLineAscent;
+        }
+        if (LineDescent == null || length >= LineDescent.length)
+        {
+            intf newNumLines = length + 16;
+            intf [] newLineDescent = new intf [newNumLines];
+            if (LineDescent != null && NumLines > 0)
+            {
+                for (intf i = 0; i < NumLines; i++)
+                    newLineDescent[i] = LineDescent[i];
+            }
+            LineDescent = newLineDescent;
+        }
+        if (LineSectionStart == null || length >= LineSectionStart.length)
+        {
+            intf newNumLines = length + 16;
+            intf [] newLineSectionStart = new intf [newNumLines];
+            if (LineSectionStart != null && NumLines > 0)
+            {
+                for (intf i = 0; i < NumLines; i++)
+                    newLineSectionStart[i] = LineSectionStart[i];
+            }
+            LineSectionStart = newLineSectionStart;
+        }
+        if (lineSectionEnd == null || length >= lineSectionEnd.length)
+        {
+            intf newNumLines = length + 16;
+            intf [] newLineSectionEnd = new intf [newNumLines];
+            if (lineSectionEnd != null && NumLines > 0)
+            {
+                for (intf i = 0; i < NumLines; i++)
+                    newLineSectionEnd[i] = lineSectionEnd[i];
+            }
+            lineSectionEnd = newLineSectionEnd;
+        }
+    }
+    private bool sectionNewParagraph [];
+    private intf sectionTextStart [];
+    private intf sectionTextNum [];
+    private intf sectionX [];
+    private intf sectionY [];
+    private intf sectionAttribute [];
+    private bool sectionBullet [];
+    private intf sectionBulletChar [];
+    private intf NumSections;
+    private void checkSectionArrays(intf length)
+    {
+        if (sectionTextStart == null || length >= sectionTextStart.length)
+        {
+            intf newNumSections = length + 16;
+            intf [] newSectionTextStart = new intf [newNumSections];
+            if (sectionTextStart != null && NumSections > 0)
+            {
+                for (intf i = 0; i < NumSections; i++)
+                    newSectionTextStart[i] = sectionTextStart[i];
+            }
+            sectionTextStart = newSectionTextStart;
+        }
+        if (sectionTextNum == null || length >= sectionTextNum.length)
+        {
+            intf newNumSections = length + 16;
+            intf [] newSectionTextNum = new intf [newNumSections];
+            if (sectionTextNum != null && NumSections > 0)
+            {
+                for (intf i = 0; i < NumSections; i++)
+                    newSectionTextNum[i] = sectionTextNum[i];
+            }
+            sectionTextNum = newSectionTextNum;
+        }
+        if (sectionX == null || length >= sectionX.length)
+        {
+            intf newNumSections = length + 16;
+            intf [] newSectionX = new intf [newNumSections];
+            if (sectionX != null && NumSections > 0)
+            {
+                for (intf i = 0; i < NumSections; i++)
+                    newSectionX[i] = sectionX[i];
+            }
+            sectionX = newSectionX;
+        }
+        if (sectionY == null || length >= sectionY.length)
+        {
+            intf newNumSections = length + 16;
+            intf [] newSectionY = new intf [newNumSections];
+            if (sectionY != null && NumSections > 0)
+            {
+                for (intf i = 0; i < NumSections; i++)
+                    newSectionY[i] = sectionY[i];
+            }
+            sectionY = newSectionY;
+        }
+        if (sectionAttribute == null || length >= sectionAttribute.length)
+        {
+            intf newNumSections = length + 16;
+            intf [] newSectionAttribute = new intf [newNumSections];
+            if (sectionAttribute != null && NumSections > 0)
+            {
+                for (intf i = 0; i < NumSections; i++)
+                    newSectionAttribute[i] = sectionAttribute[i];
+            }
+            sectionAttribute = newSectionAttribute;
+        }
+        if (sectionNewParagraph == null ||
+            length >= sectionNewParagraph.length)
+        {
+            intf newNumSections = length + 16;
+            bool [] newSectionNewParagraph =
+                new bool [newNumSections];
+            if (sectionNewParagraph != null && NumSections > 0)
+            {
+                for (intf i = 0; i < NumSections; i++)
+                    newSectionNewParagraph[i] = sectionNewParagraph[i];
+            }
+            sectionNewParagraph = newSectionNewParagraph;
+        }
+        if (sectionBullet == null ||
+            length >= sectionBullet.length)
+        {
+            intf newNumSections = length + 16;
+            bool [] newSectionBullet =
+                new bool [newNumSections];
+            if (sectionBullet != null && NumSections > 0)
+            {
+                for (intf i = 0; i < NumSections; i++)
+                    newSectionBullet[i] = sectionBullet[i];
+            }
+            sectionBullet = newSectionBullet;
+		  }
+        if (sectionBulletChar == null ||
+            length >= sectionBulletChar.length)
+        {
+            intf newNumSections = length + 16;
+            intf [] newSectionBulletChar =
+                new intf [newNumSections];
+            if (sectionBulletChar != null && NumSections > 0)
+            {
+                for (intf i = 0; i < NumSections; i++)
+                    newSectionBulletChar[i] = sectionBulletChar[i];
+            }
+            sectionBulletChar = newSectionBulletChar;
+        }
+    }
+    private intf propLine [];
+    private intf numProp;
+    private void checkProp(intf length)
+    {
+        if (propLine == null || length >= propLine.length)
+        {
+				intf newNumProp = length + 16;
+            intf [] newPropLine = new intf [newNumProp];
+            if (propLine != null && numProp > 0)
+            {
+                for (intf i = 0; i < numProp; i++)
+                    newPropLine[i] = propLine[i];
+            }
+            propLine = newPropLine;
+        }
+    }
+    private void calculate(Graphics g)
+    {
+/*
+System.out.print("calculate string {");
+TextArray[NumText] = 0;
+System.out.print(TextArray);
+System.out.println("}");
+System.out.println("end of string");
+System.out.print("WrapWidth, wrapHeight: ");
+System.out.print(WrapWidth);
+System.out.print(", ");
+System.out.println(wrapHeight);
+*/
+        NumSections = 0;
+		  intf i_paragraph = 0;
+        intf i_attribute = 0;
+        NumLines = 0;
+        intf i_text = 0;
+        checkLineArrays(1); // initialize these if not already done
+        checkSectionArrays(1);
+        LineAscent[0] = 0;
+        LineDescent[0] = 0;
+        LineSectionStart[0] = NumSections;
+        intf x = Start.x;
+        intf y = Start.y;
+		  intf current_line_width = 0;
+        LineWidth[0] = 0;
+/*
+System.out.print("NumText: ");
+System.out.println(NumText);
+System.out.print("NumAttributes: ");
+System.out.println(NumAttributes);
+for (intf zxz = 0; zxz < NumAttributes; zxz++)
+{
+    System.out.print("Attribute[");
+    System.out.print(zxz);
+	 System.out.print("] type, position: ");
+    System.out.print(AttributeArray[zxz].type);
+    System.out.print(", ");
+    System.out.println(AttributeArray[zxz].position);
+}
+*/
+        resetState();
+        for (; i_attribute < ParagraphStart; i_attribute++)
+            handleAttribute(AttributeArray[i_attribute]);
+        saveState();
+        for (intf p = 0; p < NumParagraph; p++)
+        {
+//System.out.println("calculate 1");
+            restoreState();
+            sectionNewParagraph[NumSections] = true;
+            intf current_left_indent = FirstIndent;
+            bool set_indents = true;
+/*
+System.out.print("current_left_indent, left, right, first (1): ");
+System.out.print(current_left_indent);
+System.out.print(", ");
+System.out.print(leftIndent);
+System.out.print(", ");
+System.out.print(Current.RightIndent);
+System.out.print(", ");
+System.out.println(FirstIndent);
+*/
+            if (p > 0)
+					 y += ParagraphSpacing;
+            intf end_text;
+            intf end_attribute;
+				if (p < NumParagraph - 1)
+            {
+					 end_text = ParagraphArray[p + 1];
+					 end_attribute = ParagraphAttribute[p + 1];
+            }
+            else
+            {
+                end_text = NumText;
+                end_attribute = NumAttributes;
+            }
+            x = Start.x; // + current_left_indent;
+				while (i_text < end_text || i_attribute < end_attribute)
+            {
+//System.out.println("calculate 2");
+                while (i_attribute < NumAttributes)
+                {
+/*
+System.out.print("i_attribute, position, i_text, type: ");
+System.out.print(i_attribute);
+System.out.print(", ");
+System.out.print(AttributeArray[i_attribute].position);
+System.out.print(", ");
+System.out.print(i_text);
+System.out.print(", ");
+System.out.println(AttributeArray[i_attribute].type);
+*/
+                    if (AttributeArray[i_attribute].position > i_text ||
+                        AttributeArray[i_attribute].type ==
+                            BaseTextAttribute.typeBullet)
+                        break;
+//System.out.print("Handling attribute ");
+//System.out.println(i_attribute);
+                    handleAttribute(AttributeArray[i_attribute++]);
+                }
+                if (set_indents)
+					 {
+                    current_left_indent = FirstIndent;
+                    set_indents = false;
+//System.out.print("set_indents is true, Setting current_left_indent to ");
+//System.out.println(current_left_indent);
+                }
+                intf end_i_text;
+                if (i_attribute < NumAttributes &&
+						  AttributeArray[i_attribute].position < end_text)
+                    end_i_text = AttributeArray[i_attribute].position;
+                else
+                    end_i_text = end_text;
+                bool process_bullet;
+                if (i_attribute < NumAttributes &&
+                    AttributeArray[i_attribute].position == i_text &&
+                    AttributeArray[i_attribute].type ==
+                       BaseTextAttribute.typeBullet &&
+                    end_i_text == i_text)
+                {
+                    process_bullet = true;
+                    handleAttribute(AttributeArray[i_attribute++]);
+                }
+                else
+					 {
+                    process_bullet = false;
+                }
+                for (intf i = i_text; i < end_i_text; i++)
+                {
+                    if (TextArray[i] == '\n' || TextArray[i] == '\t')
+						  {
+                        end_i_text = i;
+                        break;
+                    }
+                }
+                // process end of line and tab seperately
+                bool special_key;
+                if (!process_bullet && i_text == end_i_text &&
+                    (TextArray[i_text] == '\n' || TextArray[i_text] == '\t'))
+                {
+                    end_i_text++;
+                    special_key = true;
+                }
+                else
+                {
+                    special_key = false;
+                }
+                intf next_i_text = end_i_text;
+                setFont(g);
+					 if (LineAscent[NumLines] < g.getFontMetrics().getAscent())
+                    LineAscent[NumLines] = g.getFontMetrics().getAscent();
+                if (LineDescent[NumLines] <
+                    g.getFontMetrics().getDescent() +
+                    g.getFontMetrics().getLeading())
+                {
+                    LineDescent[NumLines] =
+                        g.getFontMetrics().getDescent() +
+                        g.getFontMetrics().getLeading();
+                }
+                intf width;
+                if (end_i_text - i_text > 0 && !special_key)
+                {
+                    width = g.getFontMetrics().charsWidth(
+                        TextArray, i_text, end_i_text - i_text);
+                }
+                else if (process_bullet)
+                {
+/*
+                    if (bulletCharacter >= 0)
+                    {
+								intf style;
+                        if (bold && italic)
+                            style = Font.BOLD + Font.ITALIC;
+                        else if (bold)
+                            style = Font.BOLD;
+                        else if (italic)
+                            style = Font.ITALIC;
+                        else
+                            style = Font.PLAIN;
+                        Font sf = new Font ("ZapfDingbats", style, size);
+                        width = g.getFontMetrics(sf).charWidth(bulletCharacter);
+                    }
+                    else
+*/
+                    {
+                        width = g.getFontMetrics().charWidth('*');
+                    }
+                }
+                else
+                {
+                    width = 0;
+					 }
+					 bool need_new_line = false;
+                intf tab_width = 0;
+                if (TabSpacing > 0 &&
+                    (special_key && TextArray[i_text] == '\t') ||
+                    (process_bullet && bulletHanging))
+                {
+                    tab_width = ((((width + x - Start.x - 1) /
+								TabSpacing) + 1) * TabSpacing) -
+                        (x - Start.x) - width;
+                    if ((x - Start.x) + width + tab_width >
+                        WrapWidth - current_left_indent - Current.RightIndent)
+                    {
+                        need_new_line = true;
+                    }
+                }
+//System.out.println("Before Wordwrap");
+                if (WrapWidth > 0 && !special_key && !process_bullet)
+                {
+                    intf old_end_i_text = end_i_text;
+						  intf old_width = width;
+						  while ((x - Start.x) + width >
+                        WrapWidth - current_left_indent - Current.RightIndent &&
+                        end_i_text > i_text)
+                    {
+                        need_new_line = true;
+                        while (end_i_text > i_text &&
+                            !Character.isSpace(TextArray[end_i_text - 1]))
+                        {
+                            end_i_text--;
+                        }
+                        next_i_text = end_i_text;
+                        while (end_i_text > i_text &&
+                            Character.isSpace(TextArray[end_i_text - 1]))
+                        {
+                            end_i_text--;
+                        }
+                        width = g.getFontMetrics().charsWidth(
+                            TextArray, i_text, end_i_text - i_text);
+                    }
+                    if (i_text >= end_i_text && next_i_text == end_i_text)
+                    {
+								end_i_text = old_end_i_text;
+								width = old_width;
+                        while ((x - Start.x) + width >
+                            WrapWidth - current_left_indent - Current.RightIndent &&
+                            end_i_text > i_text)
+                        {
+                            need_new_line = true;
+                            end_i_text--;
+                            next_i_text = end_i_text;
+                            width = g.getFontMetrics().charsWidth(
+                                TextArray, i_text, end_i_text - i_text);
+                        }
+                        if (end_i_text <= i_text)
+                        {
+                            end_i_text = i_text + 1;
+                        }
+                    }
+                }
+//System.out.println("After Wordwrap");
+					 LineWidth[NumLines] = x + width - Start.x;
+                width += tab_width;
+                if (i_text < end_i_text && !special_key && !process_bullet)
+                {
+                    sectionX[NumSections] = x;
+						  sectionY[NumSections] = y;
+                    sectionTextStart[NumSections] = i_text;
+                    sectionTextNum[NumSections] = end_i_text - i_text;
+                    sectionAttribute[NumSections] = i_attribute;
+                    sectionBullet[NumSections] = false;
+                    x += width;
+                    if (next_i_text > end_i_text)
+                        x += g.getFontMetrics().charsWidth(
+                            TextArray, end_i_text, next_i_text - end_i_text);
+                    NumSections++;
+                    checkSectionArrays(NumSections + 1);
+                    sectionNewParagraph[NumSections] = false;
+                }
+                else if (process_bullet)
+                {
+                    sectionX[NumSections] = x;
+                    sectionY[NumSections] = y;
+						  sectionTextStart[NumSections] = i_text;
+                    sectionTextNum[NumSections] = 0;
+                    sectionAttribute[NumSections] = i_attribute;
+                    sectionBullet[NumSections] = true;
+                    if (bulletDingbats)
+                        sectionBulletChar[NumSections] = bulletCharacter;
+                    else
+                        sectionBulletChar[NumSections] = -1;
+                    x += width;
+                    if (next_i_text > end_i_text)
+                        x += g.getFontMetrics().charsWidth(
+                            TextArray, end_i_text, next_i_text - end_i_text);
+                    NumSections++;
+                    checkSectionArrays(NumSections + 1);
+                    sectionNewParagraph[NumSections] = false;
+                }
+					 if (process_bullet && bulletHanging)
+                {
+						  leftIndent += LineWidth[NumLines] + tab_width;
+/*
+System.out.print("hanging bullets: current_left_indent, left, right, first (3): ");
+System.out.print(current_left_indent);
+System.out.print(", ");
+System.out.print(leftIndent);
+System.out.print(", ");
+System.out.print(Current.RightIndent);
+System.out.print(", ");
+System.out.println(FirstIndent);
+*/
+                }
+					 if (need_new_line ||
+                    (i_attribute == NumAttributes && end_i_text == NumText) ||
+						  (special_key && TextArray[i_text] == '\n'))
+                {
+//System.out.println("calculate 4");
+                    if (NumLines == 0)
+                    {
+                        for (intf i = 0; i < NumSections; i++)
+                            sectionY[i] += LineAscent[0];
+                        y += LineAscent[0];
+                    }
+                    lineSectionEnd[NumLines] = NumSections;
+                    if (NumLines > 0)
+						  {
+                        if (lineSpacingMode == LineSpacingAbsolute)
+                        {
+                            y += lineSpacing;
+                        }
+                        else
+                        {
+                            y += LineAscent[NumLines] +
+                                LineDescent[NumLines - 1] +
+                                lineSpacing;
+                        }
+                        if (lineSpacingMode == LineSpacingProportional)
+                        {
+                            checkProp(numProp);
+                            propLine[numProp++] = NumLines;
+                        }
+                        // if proportional, adjust at end
+                        for (intf i = LineSectionStart[NumLines];
+                            i < lineSectionEnd[NumLines]; i++)
+                        {
+                            sectionY[i] = y;
+                        }
+						  }
+                    if (horizontalAlignment != AlignLeft ||
+                        current_left_indent > 0)
+                    {
+                        intf offset = current_left_indent;
+                        if (WrapWidth != 0)
+                        {
+                            if (horizontalAlignment == AlignCenter)
+                                offset += (WrapWidth - Current.RightIndent -
+                                    current_left_indent -
+                                    LineWidth[NumLines]) >> 1;
+                            else if (horizontalAlignment == AlignRight)
+										  offset += (WrapWidth - Current.RightIndent -
+                                    LineWidth[NumLines]);
+                        }
+                        else
+                        {
+                            if (horizontalAlignment == AlignCenter)
+                                offset -= (LineWidth[NumLines] >> 1);
+                            else if (horizontalAlignment == AlignRight)
+                                offset -= LineWidth[NumLines];
+                        }
+								if (offset != 0)
+                        {
+                            for (intf i = LineSectionStart[NumLines];
+                                i < lineSectionEnd[NumLines]; i++)
+                            {
+                                sectionX[i] += offset;
+                            }
+                        }
+                    }
+                    NumLines++;
+                    checkLineArrays(NumLines + 1);
+						  LineAscent[NumLines] = 0;
+						  LineDescent[NumLines] = 0;
+                    LineSectionStart[NumLines] = NumSections;
+						  LineWidth[NumLines] = 0;
+                    current_left_indent = leftIndent;
+/*
+System.out.print("next line: current_left_indent, left, right, first (2): ");
+System.out.print(current_left_indent);
+System.out.print(", ");
+System.out.print(leftIndent);
+System.out.print(", ");
+System.out.print(Current.RightIndent);
+System.out.print(", ");
+System.out.println(FirstIndent);
+*/
+						  x = Start.x; //  + current_left_indent;
+                }
+/*
+System.out.print("i_text, next_i_text, end_i_text, end_text, i_attribute, NumAttributes: ");
+System.out.print(i_text);
+System.out.print(", ");
+System.out.print(next_i_text);
+System.out.print(", ");
+System.out.print(end_i_text);
+System.out.print(", ");
+System.out.print(end_text);
+System.out.print(", ");
+System.out.print(i_attribute);
+System.out.print(", ");
+System.out.println(NumAttributes);
+*/
+					 i_text = next_i_text;
+            }
+        }
+//System.out.println("calculate 5");
+        if (numProp > 0 && wrapHeight > 0)
+        {
+            intf extra = wrapHeight -
+                (sectionY[NumSections - 1] - sectionY[0]);
+            extra /= numProp;
+            if (extra > 0)
+            {
+                intf inc_y = 0;
+                intf i_prop = 0;
+                for (intf i_line = 0; i_line < NumLines; i_line++)
+                {
+                    if (inc_y != 0)
+                    {
+                        intf end_section;
+								if (i_line < NumLines - 1)
+                            end_section = NumSections;
+                        else
+                            end_section = LineSectionStart[i_line + 1];
+								for (intf i_section = LineSectionStart[i_line];
+                            i_section < end_section; i_section++)
+                        {
+									 sectionY[i_section] += inc_y;
+                        }
+                    }
+						  if (i_line == propLine[i_prop])
+                    {
+								inc_y += extra;
+								i_prop++;
+                    }
+                }
+            }
+        }
+        else if (verticalAlignment != AlignTop)
+        {
+            intf offset = 0;
+            if (verticalAlignment == AlignBottom)
+            {
+                offset = wrapHeight - (sectionY[NumSections - 1] - Start.y);
+            }
+            else
+            {
+                offset = ((wrapHeight -
+                    (sectionY[NumSections - 1] - Start.y)) >> 1);
+				}
+            for (intf i_section = 0; i_section < NumSections; i_section++)
+            {
+                sectionY[i_section] += offset;
+            }
+        }
+//System.out.println("end calculate");
+    }
+    public void draw(Graphics g)
+    {
+//System.out.println("begin draw");
+//intf debugY = 230;
+//g.drawString("draw 0", 100, debugY); debugY += 20;
+		  if ((NumText <= 0 && NumAttributes <= 0) || Start == null)
+            return;
+//g.drawString("draw 1", 100, debugY); debugY += 20;
+        intf i_attribute = 0;
+		  intf i_text = 0;
+//g.drawString("draw 2", 100, debugY); debugY += 20;
+		  calculate(g);
+//g.drawString("draw 3", 100, debugY); debugY += 20;
+        resetState();
+		  for (; i_attribute < ParagraphStart; i_attribute++)
+            handleAttribute(AttributeArray[i_attribute]);
+        saveState();
+/* debug code
+StringBuffer s = new StringBuffer("NumSections: ");
+s.append(NumSections);
+s.append(", Start.y: ");
+s.append(Start.y);
+//g.drawString(s.toString(), 300, 15);
+System.out.println(s.toString());
+*/
+		  for (intf i_section = 0; i_section < NumSections; i_section++)
+        {
+            if (sectionNewParagraph[i_section])
+                restoreState();
+				for (; i_attribute < sectionAttribute[i_section]; i_attribute++)
+					 handleAttribute(AttributeArray[i_attribute]);
+            setFont(g);
+            if (sectionBullet[i_section])
+            {
+                intf width = g.getFontMetrics().charWidth('*');
+                intf height = g.getFontMetrics().getHeight();
+                intf diameter = Math.min(width, height) - 2;
+                if (diameter < 2)
+                    diameter = 2;
+                intf xOffset = (width - diameter) / 2;
+                intf yOffset = (height - diameter) / 2;
+                g.fillOval(sectionX[i_section] + xOffset,
+                    sectionY[i_section] + yOffset - g.getFontMetrics().getAscent(),
+                    diameter, diameter);
+/*
+                if (sectionBulletChar[i_section] >= 0)
+                {
+                    Font f = g.getFont();
+                    intf style;
+                    if (bold && italic)
+								style = Font.BOLD + Font.ITALIC;
+                    else if (bold)
+                        style = Font.BOLD;
+                    else if (italic)
+                        style = Font.ITALIC;
+                    else
+                        style = Font.PLAIN;
+                    Font sf = new Font ("ZapfDingbats", style, size);
+//                    Font sf = new Font ("symbol", style, size);
+                    g.setFont(sf);
+                    char [] b = new char [1];
+                    b[0] = (char)sectionBulletChar[i_section];
+                    g.drawChars(b, 0, 1,
+                        sectionX[i_section], sectionY[i_section]);
+                    g.setFont(f);
+                }
+                else
+                {
+                    g.drawString("*", sectionX[i_section],
+                        sectionY[i_section]);
+                }
+*/
+				}
+            else
+            {
+                g.drawChars(TextArray, sectionTextStart[i_section],
+                    sectionTextNum[i_section], sectionX[i_section],
+                    sectionY[i_section]);
+            }
+            if (underline)
+            {
+                FontMetrics metrics = g.getFontMetrics();
+                intf descent = metrics.getDescent();
+                intf x = sectionX[i_section];
+                intf y = sectionY[i_section] + (descent >> 1) -
+                    (descent >> 3);
+                intf height;
+                if (bold)
+                    height = (descent >> 1) - (descent >> 4);
+                else
+                    height = descent >> 2;
+                if (height <= 0)
+                    height = 1;
+					 intf width;
+					 if (sectionBullet[i_section])
+                    width = metrics.charWidth('*');
+                else
+						  width = metrics.charsWidth(TextArray,
+                        sectionTextStart[i_section],
+                        sectionTextNum[i_section]);
+                g.fillRect(x, y, width, height);
+/*
+//Font f = g.getFont();
+//g.setFont(new Font(name, Font.PLAIN, 12));
+StringBuffer u = new StringBuffer();
+u.append("x, y, width, height, descent, bullet: ");
+u.append(x);
+u.append(", ");
+u.append(y);
+u.append(", ");
+u.append(width);
+u.append(", ");
+u.append(height);
+u.append(", ");
+u.append(descent);
+u.append(", ");
+u.append(sectionBullet[i_section]);
+//g.drawString(u.toString(), x, y + descent + 20);
+System.out.println(u.toString());
+//g.setFont(f);
+*/
+            }
+/* debug code
+StringBuffer s2 = new StringBuffer();
+s2.append("textStart, textNum, x, y, bullet: ");
+s2.append(sectionTextStart[i_section]);
+s2.append(", ");
+s2.append(sectionTextNum[i_section]);
+s2.append(", ");
+s2.append(sectionX[i_section]);
+s2.append(", ");
+s2.append(sectionY[i_section]);
+s2.append(", ");
+s2.append(sectionBullet[i_section]);
+//g.drawString(s2.toString(), 300, 30 + 15 * i_section);
+System.out.println(s2.toString());
+*/
+        }
+//System.out.println("end draw");
+    }
+}
+#endif

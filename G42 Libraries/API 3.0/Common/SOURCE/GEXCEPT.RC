@@ -1,1 +1,86 @@
-/****************************************************************************gexcept.rcproduced by Borland Resource Workshop*****************************************************************************/#include "..\Include\gexcept.rh"STRINGTABLE { G42_ERROR_MEMORY, "An Memory Error has Occurred" G42_ERROR_INTERNAL, "An Internal Error has Occurred" G42_ERROR_INVALID_PARAMETE, "An Invalid Parameter has been used" G42_ERROR_LOCK, "A block of data could not be locked" G42_ERROR_FATAL, "A Fatal Error has Occurred" G42_ERROR_OUT_OF_BOUNDS, "An attempt was made to access out of bounds memory" G42_ERROR_PATH_MULTI_REC, "You have attempted to set multiple receivers for this path" G42_ERROR_PATH_MULTI_SEND, "You have attempted to set multiple senders for this path" G42_ERROR_PATH_NOT_HEAD, "This path component can not be the head" G42_ERROR_PATH_ONLY_HEAD, "This path component is only a head" G42_ERROR_PATH_NOT_SEND, "This path component is not a sender" G42_ERROR_PATH_NOT_REC, "This path component is not a receiver" G42_ERROR_PATH_NO_HEAD, "This path does not have a head, and thus cannot be started" G42_ERROR_USER_CANCEL, "User Cancel" G42_ERROR_NULL_DEREF, "Null Dereference" G42_ERROR_MMSYSTEM, "MMSystem Error" G42_ERROR_INCOMPAT_DATA, "Incompatible Data" G42_ERROR_SHORT_DATA, "Insufficient Data" G42_ERROR_TRUNC_FILE, "Truncated File" G42_ERROR_NO_BUFFER, "Sreaming write buffer not provided" G42_ERROR_DLL_LOAD, "Error Loading Dll" G42_ERROR_DLL_BADFUNC, "Error Loading Function from Dll" G42_ERROR_UNKNOWN_TYPE, "Unknown file type" G42_ERROR_MMSYSTEM_WRITE, "Error with MMsystem IO" G42_ERROR_THIRDPARTY, "Third party code error" G42_ERROR_SWAP_HANDLE, "Swapper Handle Error" G42_ERROR_SWAP_NODISK, "Swapper Out of Space Error" G42_ERROR_TIMER_FAIL, "MultiMedia timer failed to start" G42_STRING_S_FILES, "Sound Files|" G42_STRING_M_FILES, "Media Files|" G42_STRING_I_FILES, "Image Files|" G42_STRING_STCOMBINE, "Combining Stereo Data" G42_STRING_STSEPARATE, "Separating Stereo Data" G42_STRING_MIXER, "Mixing Data" G42_STRING_DELAY, "Computing Delay" G42_STRING_REVERSE, "Reversing Data" G42_STRING_CHANMIX, "Mixing Channels" G42_STRING_CONVERT, "Converting Bits and Channels" G42_STRING_CONVERTRATE, "Converting Sampling Rate" G42_STRING_AMP, "Adjusting Amplitude" G42_STRING_MINMAX, "Finding Min and Max values" G42_STRING_READING, "Reading File" G42_STRING_WRITING, "Writing File" G42_ERROR_SWAP_NO_TEMP_FILE, "Could not create temporary file for swapper" G42_ERROR_FILE_EXISTS, "Tried to overwrite a file that already exists" G42_ERROR_FILE_DOES_NOT_EXIST, "Tried to open a file that does not exist" G42_ERROR_FILE_OPEN_FAILED, "Could not open file" G42_ERROR_FILE_READ_FAILED, "Could not read from file or tried to read past end of file" G42_ERROR_FILE_WRITE_FAILED, "Could not write to file, possibly out of disk space" G42_ERROR_FILE_CLOSE_FAILED, "Could not close file, possibly out of disk space" G42_ERROR_FILE_SEEK_FAILED, "Could not seek in file" G42_ERROR_FILE_DELETE_FAILED, "Could not delete file" G42_ERROR_FILE_GETSIZE_FAILED, "Could not determine file size" G42_ERROR_FILE_DISKSP_FAILED, "Could not determine disk space free"}G42_CURSOR_DROPPER CURSOR { '00 00 02 00 01 00 20 20 00 00 07 00 19 00 30 01' '00 00 16 00 00 00 28 00 00 00 20 00 00 00 40 00' '00 00 01 00 01 00 00 00 00 00 00 01 00 00 00 00' '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00' '00 00 FF FF FF 00 00 00 00 00 00 00 00 00 00 00' '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00' '00 00 00 00 00 00 00 00 00 00 00 38 00 00 00 7C' '00 00 00 3E 00 00 00 1F 00 00 00 0F 80 00 00 07' 'C0 00 00 03 E0 00 00 01 C0 00 00 00 80 00 00 00' '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00' '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00' '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00' '00 00 00 00 00 00 FF FF FF FF FF FF FF FF FF FF' 'FF FF FF FF FF FF FF FF FF FF FC FF FF FF FD 7F' 'FF FF FE 8F FF FF FF 77 FF FF FF 43 FF FF FF 01' 'FF FF FF 80 FF FF FF C0 7F FF FF E0 3F FF FF F0' '17 FF FF F8 07 FF FF FC 07 FF FF FE 03 FF FF FF' '00 7F FF FE 00 3F FF FF C0 1F FF FF E0 1F FF FF' 'E0 1F FF FF E0 1F FF FF F0 3F FF FF F8 7F FF FF' 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF' 'FF FF FF FF FF FF'}
+/****************************************************************************
+gexcept.rc
+produced by Borland Resource Workshop
+*****************************************************************************/
+#include "..\Include\gexcept.rh"
+STRINGTABLE 
+{
+ G42_ERROR_MEMORY, "An Memory Error has Occurred"
+ G42_ERROR_INTERNAL, "An Internal Error has Occurred"
+ G42_ERROR_INVALID_PARAMETE, "An Invalid Parameter has been used"
+ G42_ERROR_LOCK, "A block of data could not be locked"
+ G42_ERROR_FATAL, "A Fatal Error has Occurred"
+ G42_ERROR_OUT_OF_BOUNDS, "An attempt was made to access out of bounds memory"
+ G42_ERROR_PATH_MULTI_REC, "You have attempted to set multiple receivers for this path"
+ G42_ERROR_PATH_MULTI_SEND, "You have attempted to set multiple senders for this path"
+ G42_ERROR_PATH_NOT_HEAD, "This path component can not be the head"
+ G42_ERROR_PATH_ONLY_HEAD, "This path component is only a head"
+ G42_ERROR_PATH_NOT_SEND, "This path component is not a sender"
+ G42_ERROR_PATH_NOT_REC, "This path component is not a receiver"
+ G42_ERROR_PATH_NO_HEAD, "This path does not have a head, and thus cannot be started"
+ G42_ERROR_USER_CANCEL, "User Cancel"
+ G42_ERROR_NULL_DEREF, "Null Dereference"
+ G42_ERROR_MMSYSTEM, "MMSystem Error"
+ G42_ERROR_INCOMPAT_DATA, "Incompatible Data"
+ G42_ERROR_SHORT_DATA, "Insufficient Data"
+ G42_ERROR_TRUNC_FILE, "Truncated File"
+ G42_ERROR_NO_BUFFER, "Sreaming write buffer not provided"
+ G42_ERROR_DLL_LOAD, "Error Loading Dll"
+ G42_ERROR_DLL_BADFUNC, "Error Loading Function from Dll"
+ G42_ERROR_UNKNOWN_TYPE, "Unknown file type"
+ G42_ERROR_MMSYSTEM_WRITE, "Error with MMsystem IO"
+ G42_ERROR_THIRDPARTY, "Third party code error"
+ G42_ERROR_SWAP_HANDLE, "Swapper Handle Error"
+ G42_ERROR_SWAP_NODISK, "Swapper Out of Space Error"
+ G42_ERROR_TIMER_FAIL, "MultiMedia timer failed to start"
+ G42_STRING_S_FILES, "Sound Files|"
+ G42_STRING_M_FILES, "Media Files|"
+ G42_STRING_I_FILES, "Image Files|"
+ G42_STRING_STCOMBINE, "Combining Stereo Data"
+ G42_STRING_STSEPARATE, "Separating Stereo Data"
+ G42_STRING_MIXER, "Mixing Data"
+ G42_STRING_DELAY, "Computing Delay"
+ G42_STRING_REVERSE, "Reversing Data"
+ G42_STRING_CHANMIX, "Mixing Channels"
+ G42_STRING_CONVERT, "Converting Bits and Channels"
+ G42_STRING_CONVERTRATE, "Converting Sampling Rate"
+ G42_STRING_AMP, "Adjusting Amplitude"
+ G42_STRING_MINMAX, "Finding Min and Max values"
+ G42_STRING_READING, "Reading File"
+ G42_STRING_WRITING, "Writing File"
+ G42_ERROR_SWAP_NO_TEMP_FILE, "Could not create temporary file for swapper"
+ G42_ERROR_FILE_EXISTS, "Tried to overwrite a file that already exists"
+ G42_ERROR_FILE_DOES_NOT_EXIST, "Tried to open a file that does not exist"
+ G42_ERROR_FILE_OPEN_FAILED, "Could not open file"
+ G42_ERROR_FILE_READ_FAILED, "Could not read from file or tried to read past end of file"
+ G42_ERROR_FILE_WRITE_FAILED, "Could not write to file, possibly out of disk space"
+ G42_ERROR_FILE_CLOSE_FAILED, "Could not close file, possibly out of disk space"
+ G42_ERROR_FILE_SEEK_FAILED, "Could not seek in file"
+ G42_ERROR_FILE_DELETE_FAILED, "Could not delete file"
+ G42_ERROR_FILE_GETSIZE_FAILED, "Could not determine file size"
+ G42_ERROR_FILE_DISKSP_FAILED, "Could not determine disk space free"
+}
+G42_CURSOR_DROPPER CURSOR 
+{
+ '00 00 02 00 01 00 20 20 00 00 07 00 19 00 30 01'
+ '00 00 16 00 00 00 28 00 00 00 20 00 00 00 40 00'
+ '00 00 01 00 01 00 00 00 00 00 00 01 00 00 00 00'
+ '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+ '00 00 FF FF FF 00 00 00 00 00 00 00 00 00 00 00'
+ '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+ '00 00 00 00 00 00 00 00 00 00 00 38 00 00 00 7C'
+ '00 00 00 3E 00 00 00 1F 00 00 00 0F 80 00 00 07'
+ 'C0 00 00 03 E0 00 00 01 C0 00 00 00 80 00 00 00'
+ '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+ '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+ '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+ '00 00 00 00 00 00 FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FC FF FF FF FD 7F'
+ 'FF FF FE 8F FF FF FF 77 FF FF FF 43 FF FF FF 01'
+ 'FF FF FF 80 FF FF FF C0 7F FF FF E0 3F FF FF F0'
+ '17 FF FF F8 07 FF FF FC 07 FF FF FE 03 FF FF FF'
+ '00 7F FF FE 00 3F FF FF C0 1F FF FF E0 1F FF FF'
+ 'E0 1F FF FF E0 1F FF FF F0 3F FF FF F8 7F FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF'
+}

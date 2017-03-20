@@ -1,10 +1,8 @@
 // gictrans.h - G42ImageTransMKController
 #if !defined(GICTRANS_H)
 #define GICTRANS_H
-
 #include "gicmk.h"
 #include "gnotify.h"
-
 class G42NotifyTransChangedMessage : public G42NotifyMessage
 {
 public:
@@ -13,7 +11,6 @@ public:
 		: Area(area), Transparent(transparent),
 			TransparentColor(transparent_color), Final(final) {}
 	virtual ~G42NotifyTransChangedMessage(void) {}
-
 	G42AreaController * GetAreaController(void) const
 		{ return Area; }
 	bool IsFinal(void) const
@@ -22,20 +19,17 @@ public:
 		{ return Transparent; }
 	const G42Color & GetTransparentColor(void) const
 		{ return TransparentColor; }
-
 private:
 	G42AreaController * Area;
 	bool Final;
 	bool Transparent;
 	G42Color TransparentColor;
 };
-
 class G42ImageTransMKController : public G42MouseKeyController
 {
 public:
 	G42ImageTransMKController(G42ResourceIdentifier id);
 	virtual ~G42ImageTransMKController(void);
-
 	virtual void		Draw (G42DrawLocation location = 0);	// Draws private UI
 	virtual bool		ProcessMessage(G42MouseKeyMessage * message);
 	virtual void 		SetAreaController(G42AreaController * area_controller);
@@ -44,11 +38,9 @@ public:
 	virtual bool		IdleAction (void);
 	virtual void		Clear(void);
 	virtual void		ResetDrawState(void);
-
 private:
 	// Instance variables
 	bool				ButtonDown; // true when button is down
-
 	/*  Mouse & Keyboard Messages  */
 	bool 						HandleMouseMessage (void);
 	bool						HandleMouseDoubleClick (void);
@@ -60,6 +52,4 @@ private:
 	bool 						HandleKeyDown (void);
 	bool 						HandleKeyUp (void);
 };
-
 #endif // GICTRANS_H
-

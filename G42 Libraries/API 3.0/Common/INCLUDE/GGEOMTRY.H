@@ -1,1 +1,1877 @@
-/*-----------------------------------------------------------------------------	file:	 		ggeometry.h	author:		Jonathan Schafer	classes:		G42Point, G42Size, G42Rect	date:			10/6/96	revision:	3.0	This file includes three classes for creating and manipulating rectangles,	points, and sizes.  They are essentially based on Windows' tagRECT,	tagPOINT, and tagSIZE although they are not derived from those structs.	Conversion operators are provided to/from the Windows structs as well as Mac	rectangles, points, and sizes.	Conversion to/from operators are also provided for Borland's TRect, TPoint,	and TSize classes.  Note that Borland's TRect and Windows' tagRECT	right and bottom parameters include the outer edge in their rectangle while	the G42Rect class does not. When converting to/from Borland TRect and	Windows tagRECT, (1, 1) is added or subtracted from the right and bottom	parameters as necessary.-----------------------------------------------------------------------------*/// Compiler directives#if !defined(GGEOMTRY_H)#define GGEOMTRY_H#include "gtype.h"#include "gtools.h"#ifdef MACOS#include "quickdraw.h"#endif// Forward declarationsclass G42Point;/*-----------------------------------------------------------------------------	class G42Size-----------------------------------------------------------------------------*/class G42Size{public:	// Constructors	G42Size (void);	G42Size (int32 dx, int32 dy);	G42Size (const G42Point & point);	G42Size (const G42Size & ref);	G42Size (uint32 size);#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)	G42Size (const tagSIZE far & size);	G42Size (const tagPOINT far & point);#endif#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)	G42Size (const TSize far & size);	G42Size (const TPoint far & point);#endif	// Information functions/operators	bool operator == (const G42Size & other) const;	bool operator != (const G42Size & other) const;	int32 GetWidth (void) const;	int32 GetHeight (void) const;	int32 Magnitude (void) const;	// Conversion operators#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)	operator tagPOINT (void) const;	operator tagSIZE (void) const;#endif#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)	operator TPoint (void) const;	operator TSize (void) const;#endif	// Functions/binary operators that return sizes	G42Size operator + (const G42Size & size) const;	G42Size operator - (const G42Size & size) const;	G42Size operator - (void) const;	// Functions/assignment operators that modify this size	G42Size & operator = (const G42Size & size);	G42Size & operator += (const G42Size & size);	G42Size & operator -= (const G42Size & size);	// Useful for Mac stuff	void Set (int32 width, int32 height);	// Data members	int32 Width;	int32 Height;};/*-----------------------------------------------------------------------------	class G42Point-----------------------------------------------------------------------------*/class G42Point{public:	// Constructors	G42Point (void);	G42Point (int32 x, int32 y);	G42Point (const G42Point & ref);	G42Point (const G42Size & size);	G42Point (uint32 point);#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)	G42Point (const tagPOINT far & point);	G42Point (const tagSIZE far & size);#endif#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)	G42Point (const TPoint far & point);	G42Point (const TSize far & size);#endif	// Assignment operators#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)	operator tagPOINT (void) const;	operator tagSIZE (void) const;#endif#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)	operator TPoint (void) const;	operator TSize (void) const;#endif	// Information functions/operators	bool operator == (const G42Point & other) const;	bool operator != (const G42Point & other) const;	int32 GetX (void) const;	int32 GetY (void) const;	int32 Magnitude (void) const;	// Functions/binary operators that return points or sizes	G42Point OffsetBy (int32 dx, int32 dy) const;	G42Point operator + (const G42Size & size) const;	G42Point operator - (const G42Size & size) const;	G42Point operator - (void) const;	// Functions/assignment operators that modify this point	G42Point & Offset (int32 dx, int32 dy);	G42Point & operator = (const G42Point & ref);	G42Point & operator += (const G42Size & size);	G42Point & operator -= (const G42Size & size);	// Useful for Mac stuff	void Set (int32 x, int32 y);	// Data members	int32 X;	int32 Y;};/*-----------------------------------------------------------------------------	class G42Rect-----------------------------------------------------------------------------*/// These are constants that are used by the proportional functions of G42Rect.// They are const uintfs instead of an enum because mathmatical and bitwise// operations are done with them, which causes warnings on some compilers if// we use enums.const uintf G42RectChangeLeft = 0x1;const uintf G42RectChangeRight = 0x2;const uintf G42RectChangeTop = 0x4;const uintf G42RectChangeBottom = 0x8;const uintf G42RectChangeTopLeft = 0x5; // these are made up of or-ingconst uintf G42RectChangeTopRight = 0x6; // the above valuesconst uintf G42RectChangeBottomLeft = 0x9;const uintf G42RectChangeBottomRight = 0xa;const uintf G42RectChangeWidth = 0x10;const uintf G42RectChangeHeight = 0x20;class G42Rect{public:	// Constructors	G42Rect (void);	G42Rect (int32 left, int32 top, int32 right, int32 bottom);	G42Rect (const G42Rect & ref);	G42Rect (const G42Point & topLeft, const G42Point & bottomRight);	G42Rect (const G42Point & origin, const G42Size & extent);	//  Enum for proportional functions	enum G42RectCorner {TopLeft, TopRight, BottomLeft, BottomRight};#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)	G42Rect (const tagRECT far & rect);#endif#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)	G42Rect (const TRect & rect);#endif#ifdef MACOS	G42Rect (const Rect & rect);#endif	// Type conversion operators	operator const G42Point * (void) const;	operator G42Point * (void);#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)	operator TRect(void) const;#endif#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)	operator tagRECT (void) const;#endif#ifdef MACOS	operator Rect (void) const;#endif	// (Re)Initializers	void SetNull (void);	void SetEmpty (void);	void Set (int32 left, int32 top, int32 right, int32 bottom);	void SetWH (int32 left, int32 top, int32 width, int32 height);	// Testing functions	bool IsEmpty (void) const;	bool IsNull (void) const;	bool operator == (const G42Rect & other) const;	bool operator != (const G42Rect & other) const;	// Information/access functions (const and non-const)	int32 GetLeft (void) const;	int32 GetTop (void) const;	int32 GetRight (void) const;	int32 GetBottom (void) const;	G42Point GetTopLeft (void) const;	G42Point GetTopRight (void) const;	G42Point GetBottomLeft (void) const;	G42Point GetBottomRight (void) const;	int32 GetWidth (void) const;	int32 GetWidthAbs (void) const;	int32 GetHeight (void) const;	int32 GetHeightAbs (void) const;	G42Size GetSize (void) const;	int32 GetArea (void) const;	bool Contains (const G42Point & point) const;	bool Contains (const G42Rect & rect) const;	bool Touches (const G42Rect & other) const;	G42Rect OffsetBy (int32 dx, int32 dy) const;	G42Rect operator + (const G42Size & size) const;	G42Rect operator - (const G42Size & size) const;	G42Rect MovedTo (int32 x, int32 y) const;	G42Rect InflatedBy (int32 dx, int32 dy) const;	G42Rect InflatedBy (const G42Size & size) const;	G42Rect Normalized (void) const;	G42Rect operator & (const G42Rect & other) const;	G42Rect operator | (const G42Rect & other) const;	int32 Subtract (const G42Rect & other, G42Rect result[]) const;	// Manipulation functions/operators	G42Rect & Normalize (void);	G42Rect & operator = (const G42Rect & ref);	G42Rect & Offset (int32 dx, int32 dy);	G42Rect & operator += (const G42Size & delta);	G42Rect & operator -= (const G42Size & delta);	G42Rect & MoveTo (int32 x, int32 y);	G42Rect & Inflate (int32 dx, int32 dy);	G42Rect & Inflate (const G42Size & delta);	G42Rect & operator &= (const G42Rect & other);	G42Rect & operator |= (const G42Rect & other);	G42Rect & MakeProportional (G42RectCorner corner = BottomRight);	G42Rect & ResizeProportional (double aspect_ratio,		uintf change = G42RectChangeBottomRight);	// Data members	int32 Left;	int32 Top;	int32 Right;	int32 Bottom;};/*-----------------------------------------------------------------------------	G42Size inline functions:-----------------------------------------------------------------------------*//*-----------------------------------------------------------------------------	Function - G42Size constructor	Description:		Default constructor that does nothing-----------------------------------------------------------------------------*/inlineG42Size::G42Size (void){}/*-----------------------------------------------------------------------------	Function - G42Size constructor	Parameters:		const G42Point & point - The point to use for width and height.	Description:		Constructor that sets the width and height based on a point-----------------------------------------------------------------------------*/inlineG42Size::G42Size (const G42Point & point){	Width = point.X;	Height = point.Y;}/*-----------------------------------------------------------------------------	Function - G42Size constructor	Parameters:		int32 dx,		int32 dy - The width and height.	Description:		Constructor that sets the size based on a width and height-----------------------------------------------------------------------------*/inlineG42Size::G42Size (int32 dx, int32 dy){	Width = dx;	Height = dy;}/*-----------------------------------------------------------------------------	Function - G42Size constructor	Parameters:		const G42Size & ref - The size being duplicated.	Description:		Copy constructor-----------------------------------------------------------------------------*/inlineG42Size::G42Size (const G42Size & ref){	Width = ref.Width;	Height = ref.Height;}/*-----------------------------------------------------------------------------	Function - G42Size constructor	Parameters:		uint32 size - The size expressed as a packed point.	Description:		Create a size object from a packed point.  This assumes the x coordinate		is in the low 16-bits and the y coordinate is in the high 16-bits.-----------------------------------------------------------------------------*/inlineG42Size::G42Size (uint32 size){  Width = (int16)size;  Height = (int16)(size >> 16);}#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)/*-----------------------------------------------------------------------------	Function - G42Size constructor	Parameters:		const tagSIZE far & size - A Windows tagSIZE size.	Description:		Constructor based on a Windows tagSIZE.-----------------------------------------------------------------------------*/inlineG42Size::G42Size (const tagSIZE far & size){	Width = size.cx;	Height = size.cy;}/*-----------------------------------------------------------------------------	Function - G42Size constructor	Parameters:		const tagPOINT far & point - A Windows tagPOINT point.	Description:		Constructor based on a Windows tagPOINT.-----------------------------------------------------------------------------*/inlineG42Size::G42Size (const tagPOINT far & point){	Width = point.x;	Height = point.y;}#endif#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)/*-----------------------------------------------------------------------------	Function - G42Size constructor	Parameters:		const TSize far & size - A Borland TSize size.	Description:		Constructor based on a Borland TSize.-----------------------------------------------------------------------------*/inlineG42Size::G42Size (const TSize far & size){	Width = size.cx;	Height = size.cy;}/*-----------------------------------------------------------------------------	Function - G42Size constructor	Parameters:		const TPoint far & point - A Borland TPoint point.	Description:		Constructor based on a Borland TPoint.-----------------------------------------------------------------------------*/inlineG42Size::G42Size (const TPoint far & point){	Width = point.x;	Height = point.y;}#endif/*-----------------------------------------------------------------------------	Function - operator ==	Parameters:		const G42Size & other - The size being compared.	Description:		Returns true if two sizes are equal.-----------------------------------------------------------------------------*/inline boolG42Size::operator == (const G42Size & other) const{	return (other.Width == Width && other.Height == Height);}/*-----------------------------------------------------------------------------	Function - operator !=	Parameters:		const G42Size & other - The size being compared.	Description:		Returns the opposite of operator ==.-----------------------------------------------------------------------------*/inline boolG42Size::operator != (const G42Size & other) const{	return (!(other == *this));}/*-----------------------------------------------------------------------------	Function - GetWidth	Description:		Returns the width.-----------------------------------------------------------------------------*/inline int32G42Size::GetWidth (void) const{	return Width;}/*-----------------------------------------------------------------------------	Function - GetHeight	Description:		Returns the height.-----------------------------------------------------------------------------*/inline int32G42Size::GetHeight (void) const{	return Height;}/*-----------------------------------------------------------------------------	Function - Magnitude	Description:		Computes the magnitude by calculating the square root of the location		from origin (0,0)-----------------------------------------------------------------------------*/inline int32G42Size::Magnitude (void) const{	int32 val = Width * Width + Height * Height;	if (val <= 0)		return 0;     // Could throw a math exception?	return G42SquareRoot(val);}#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)/*-----------------------------------------------------------------------------	Function - operator tagPOINT	Description:		Converts this size to a Windows tagPOINT.-----------------------------------------------------------------------------*/inlineG42Size::operator tagPOINT (void) const{	tagPOINT point;	point.x = Width;	point.y = Height;	return point;}/*-----------------------------------------------------------------------------	Function - operator tagSIZE	Description:		Converts this size to a Windows tagSIZE.-----------------------------------------------------------------------------*/inlineG42Size::operator tagSIZE (void) const{	tagSIZE size;	size.cx = Width;	size.cy = Height;	return size;}#endif#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)/*-----------------------------------------------------------------------------	Function - operator TPoint	Description:		Converts this size to a Borland TPoint.-----------------------------------------------------------------------------*/inlineG42Size::operator TPoint (void) const{	return TPoint(Width, Height);}/*-----------------------------------------------------------------------------	Function - operator TSize	Description:		Converts this size to a Borland TSize.-----------------------------------------------------------------------------*/inlineG42Size::operator TSize (void) const{	return TSize(Width, Height);}#endif/*-----------------------------------------------------------------------------	Function - operator +	Parameters:		const G42Size & size - The size to increment by.	Description:		Returns the current size incremented by size.-----------------------------------------------------------------------------*/inline G42SizeG42Size::operator + (const G42Size & size) const{	return G42Size(Width + size.Width, Height + size.Height);}/*-----------------------------------------------------------------------------	Function - operator -	Parameters:		const G42Size & size - The size to decrement by.	Description:		Returns the current size decremented by size.-----------------------------------------------------------------------------*/inline G42SizeG42Size::operator - (const G42Size & size) const{	return G42Size(Width - size.Width, Height - size.Height);}/*-----------------------------------------------------------------------------	Function - operator -	Description:		Returns the inverse of this size.-----------------------------------------------------------------------------*/inline G42SizeG42Size::operator - (void) const{	return G42Size(-Width, -Height);}/*-----------------------------------------------------------------------------	Function - operator =	Parameters:		const G42Size & size - The size to set equal to.	Description:		Sets this size to size.-----------------------------------------------------------------------------*/inline G42Size &G42Size::operator = (const G42Size & size){	Width = size.Width;	Height = size.Height;	return *this;}/*-----------------------------------------------------------------------------	Function - operator +=	Parameters:		const G42Size & size - The size to increase by.	Description:		Returns this size increased by size.-----------------------------------------------------------------------------*/inline G42Size &G42Size::operator += (const G42Size & size){	Width += size.Width;	Height += size.Height;	return *this;}/*-----------------------------------------------------------------------------	Function - operator -=	Parameters:		const G42Size & size - The size to decrease by.	Description:		Returns this size decreased by size.-----------------------------------------------------------------------------*/inline G42Size &G42Size::operator -= (const G42Size & size){	Width -= size.Width;	Height -= size.Height;	return *this;}/*-----------------------------------------------------------------------------	Function - Set	Parameters:		int32 width		int32 height		Description:		Explicitly set the values of the size.-----------------------------------------------------------------------------*/inline voidG42Size::Set (int32 width, int32 height){	Width 	= width;	Height 	= height;}/*-----------------------------------------------------------------------------	G42Point inline functions:-----------------------------------------------------------------------------*//*-----------------------------------------------------------------------------	Function - G42Point constructor	Description:		Default constructor that does nothing-----------------------------------------------------------------------------*/inlineG42Point::G42Point (void){}/*-----------------------------------------------------------------------------	Function - G42Point constructor	Parameters:		int32 x,		int32 y - The x and y value for the point.	Description:		Constructor based on two int32s-----------------------------------------------------------------------------*/inlineG42Point::G42Point (int32 x, int32 y){	X = x;	Y = y;}/*-----------------------------------------------------------------------------	Function - G42Point constructor	Parameters:		const G42Point & ref - The point being duplicated.	Description:		Copy constructor-----------------------------------------------------------------------------*/inlineG42Point::G42Point (const G42Point & ref){	X = ref.X;	Y = ref.Y;}/*-----------------------------------------------------------------------------	Function - G42Point constructor	Parameters:		const G42Size & size - The point expressed as a size.	Description:		Constructor based on a size-----------------------------------------------------------------------------*/inlineG42Point::G42Point (const G42Size & size){	X = size.Width;	Y = size.Height;}/*-----------------------------------------------------------------------------	Function - G42Point constructor	Parameters:		uint32 point - The point expressed as a packed point.	Description:		Create a point object from a packed point.  This assumes the x coordinate		is in the low 16-bits and the y coordinate is in the high 16-bits.-----------------------------------------------------------------------------*/inlineG42Point::G42Point (uint32 point){  X = (int16)point;  Y = (int16)(point >> 16);}//// Constructor based on a Windows tagPOINT//#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)/*-----------------------------------------------------------------------------	Function - G42Point constructor	Parameters:		const tagPOINT far & point - A Windows tagPOINT point.	Description:		Constructor based on a Windows tagPOINT.-----------------------------------------------------------------------------*/inlineG42Point::G42Point (const tagPOINT far & point){	X = point.x;	Y = point.y;}/*-----------------------------------------------------------------------------	Function - G42Point constructor	Parameters:		const tagSIZE far & size - A Windows tagSIZE size.	Description:		Constructor based on a Windows tagSIZE.-----------------------------------------------------------------------------*/inlineG42Point::G42Point (const tagSIZE far & size){	X = size.cx;	Y = size.cy;}#endif#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)/*-----------------------------------------------------------------------------	Function - G42Point constructor	Parameters:		const TPoint far & point - A Borland TPoint point.	Description:		Constructor based on a Borland TPoint.-----------------------------------------------------------------------------*/inlineG42Point::G42Point (const TPoint far & point){	X = point.x;	Y = point.y;}/*-----------------------------------------------------------------------------	Function - G42Point constructor	Parameters:		const TSize far & size - A Borland TSize size.	Description:		Constructor based on a Borland TSize.-----------------------------------------------------------------------------*/inlineG42Point::G42Point (const TSize far & size){	X = size.cx;	Y = size.cy;}#endif/*-----------------------------------------------------------------------------	Function - operator =	Parameters:		const G42Point & other - The point to set equal to.	Description:		Sets this point to other.-----------------------------------------------------------------------------*/inline G42Point &G42Point::operator = (const G42Point & other){	X = other.X;	Y = other.Y;	return *this;}#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)/*-----------------------------------------------------------------------------	Function - operator tagPOINT	Description:		Converts this point to a Windows tagPOINT.-----------------------------------------------------------------------------*/inlineG42Point::operator tagPOINT (void) const{	tagPOINT point;	point.x = X;	point.y = Y;	return point;}/*-----------------------------------------------------------------------------	Function - operator tagSIZE	Description:		Converts this point to a Windows tagSIZE.-----------------------------------------------------------------------------*/inlineG42Point::operator tagSIZE (void) const{	tagSIZE size;	size.cx = X;	size.cy = Y;	return size;}#endif#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)/*-----------------------------------------------------------------------------	Function - operator TPoint	Description:		Converts this point to a Borland TPoint.-----------------------------------------------------------------------------*/inlineG42Point::operator TPoint (void) const{	return TPoint(X, Y);}/*-----------------------------------------------------------------------------	Function - operator TSize	Description:		Converts this point to a Borland TSize.-----------------------------------------------------------------------------*/inlineG42Point::operator TSize (void) const{	return TSize(X, Y);}#endif/*-----------------------------------------------------------------------------	Function - operator ==	Parameters:		const G42Point & other - The point being compared.	Description:		Returns true if two points are equal.-----------------------------------------------------------------------------*/inline boolG42Point::operator == (const G42Point & other) const{	return (other.X == X && other.Y == Y) ? true : false;}/*-----------------------------------------------------------------------------	Function - operator !=	Parameters:		const G42Point & other - The point being compared.	Description:		Returns the opposite of operator ==.-----------------------------------------------------------------------------*/inline boolG42Point::operator != (const G42Point & other) const{	return (!(other == *this));}/*-----------------------------------------------------------------------------	Function - GetX	Description:		Returns the x coordinate.-----------------------------------------------------------------------------*/inline int32G42Point::GetX (void) const{	return X;}/*-----------------------------------------------------------------------------	Function - GetY	Description:		Returns the y coordinate.-----------------------------------------------------------------------------*/inline int32G42Point::GetY (void) const{	return Y;}/*-----------------------------------------------------------------------------	Function - Magnitude	Description:		Computes the magnitude by calculating the square root of the location		from origin (0,0)-----------------------------------------------------------------------------*/inline int32G42Point::Magnitude (void) const{	int32 val = X * X + Y * Y;	if (val <= 0)		return 0;     // Could throw a math exception?	return G42SquareRoot(val);}/*-----------------------------------------------------------------------------	Function - OffsetBy	Parameters:		int32 dx,		int32 dy - The amount to offset.	Description:		Returns a new point calculated from this point plus the offset.-----------------------------------------------------------------------------*/inline G42PointG42Point::OffsetBy (int32 dx, int32 dy) const{	return G42Point(X + dx, Y + dy);}/*-----------------------------------------------------------------------------	Function - operator +	Parameters:		const G42Size & size - The amount to offset expressed as a size.	Description:		Returns a new point calculated from this point plus the offset.-----------------------------------------------------------------------------*/inline G42PointG42Point::operator + (const G42Size & size) const{	return OffsetBy(size.Width, size.Height);}/*-----------------------------------------------------------------------------	Function - operator -	Parameters:		const G42Size & size - The amount to offset expressed as a size.	Description:		Returns a new point calculated from this point minus the offset.-----------------------------------------------------------------------------*/inline G42PointG42Point::operator - (const G42Size & size) const{	return OffsetBy(-size.Width, -size.Height);}/*-----------------------------------------------------------------------------	Function - operator -	Description:		Returns the inverse of this point.-----------------------------------------------------------------------------*/inline G42PointG42Point::operator - (void) const{	return (-X, -Y);}/*-----------------------------------------------------------------------------	Function - Offset	Parameters:		int32 dx,		int32 dy - The amount to offset.	Description:		Moves this point by the offset-----------------------------------------------------------------------------*/inline G42Point &G42Point::Offset (int32 dx, int32 dy){	X += dx;	Y += dy;	return *this;}/*-----------------------------------------------------------------------------	Function - operator +=	Parameters:		const G42Size & size - The amount to offset expressed as a size.	Description:		Moves this point by the offset-----------------------------------------------------------------------------*/inline G42Point &G42Point::operator += (const G42Size & size){	return Offset(size.Width, size.Height);}/*-----------------------------------------------------------------------------	Function - operator -=	Parameters:		const G42Size & size - The amount to offset expressed as a size.	Description:		Moves this point by the offset-----------------------------------------------------------------------------*/inline G42Point &G42Point::operator -= (const G42Size & size){	return Offset(-size.Width, -size.Height);}/*-----------------------------------------------------------------------------	Function - Set	Parameters:		int32 x		int32 y		Description:		Explicitly set the coordinates of the point.-----------------------------------------------------------------------------*/inline voidG42Point::Set (int32 x, int32 y){	X = x;	Y = y;}/*-----------------------------------------------------------------------------	G42Rect inline functions:-----------------------------------------------------------------------------*//*-----------------------------------------------------------------------------	Function - Set	Parameters:		int32 left,		int32 top,		int32 right,		int32 bottom - The left, top, right and bottom sides of a rectangle.	Description:		Explicitly set all of the coordinates of the rectangle.-----------------------------------------------------------------------------*/inline voidG42Rect::Set (int32 left, int32 top, int32 right, int32 bottom){	Left = left;	Top = top;	Right = right;	Bottom = bottom;}/*-----------------------------------------------------------------------------	Function - G42Rect constructor	Description:		Default constructor which does nothing-----------------------------------------------------------------------------*/inlineG42Rect::G42Rect (void){}/*-----------------------------------------------------------------------------	Function - G42Rect constructor	Parameters:		int32 left,		int32 top,		int32 right,		int32 bottom - left, top, right and bottom side of a rectangle	Description:		Constructor that sets all the values explicitly.-----------------------------------------------------------------------------*/inlineG42Rect::G42Rect(int32 left, int32 top, int32 right, int32 bottom){	Set(left, top, right, bottom);}/*-----------------------------------------------------------------------------	Function - G42Rect constructor	Parameters:		const G42Rect & ref - the G42Rect being duplicated	Description:		Copy constructor-----------------------------------------------------------------------------*/inlineG42Rect::G42Rect (const G42Rect & ref){	Set(ref.Left, ref.Top, ref.Right, ref.Bottom);}/*-----------------------------------------------------------------------------	Function - G42Rect constructor	Parameters:		const G42Point & topLeft		- the top left point of a rectangle		const G42Point & bottomRight	- the bottom right point of a rectangle	Description:		Determine a rectangle given two points.-----------------------------------------------------------------------------*/inlineG42Rect::G42Rect (const G42Point & topLeft, const G42Point & bottomRight){  Set(topLeft.X, topLeft.Y, bottomRight.X, bottomRight.Y);}/*-----------------------------------------------------------------------------	Function - G42Rect constructor	Parameters:		const G42Point & origin	- the top left point of a rectangle		const G42Size & extent	- the heigth and width of a rectangle	Description:		Determine a rectangle given its upper left point and a dimension.-----------------------------------------------------------------------------*/inlineG42Rect::G42Rect (const G42Point & origin, const G42Size & extent){  Set(origin.X, origin.Y, origin.X + extent.Width - 1, origin.Y + extent.Height - 1);}#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)/*-----------------------------------------------------------------------------	Function - G42Rect constructor	Parameters:		const tagRECT far & rect - a Windows tagRECT rectangle	Description:		Constructor to create a G42Rect from a Windows tagRECT-----------------------------------------------------------------------------*/inlineG42Rect::G42Rect (const tagRECT far & rect){	Set(rect.left, rect.top, rect.right - 1, rect.bottom - 1);}#endif#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)/*-----------------------------------------------------------------------------	Function - G42Rect constructor	Parameters:		const TRect & rect - a Borland TRect rectangle	Description:		Constructor to create a G42Rect from a Borland TRect-----------------------------------------------------------------------------*/inlineG42Rect::G42Rect (const TRect & rect){	Set(rect.left, rect.top, rect.right - 1, rect.bottom - 1);}#endif#if defined(MACOS)/*-----------------------------------------------------------------------------	Function - G42Rect constructor for Macintosh	Parameters:		const Rect & rect - a Macintosh rectangle	Description:		Constructor to create a G42Rect from a Mac Rect structure-----------------------------------------------------------------------------*/inlineG42Rect::G42Rect (const Rect & rect){	Set(rect.left, rect.top, rect.right, rect.bottom);}#endif/*-----------------------------------------------------------------------------	Function - operator const G42Point *	Description:		Return an array of two points (upperleft and bottomright)-----------------------------------------------------------------------------*/inlineG42Rect::operator const G42Point * (void) const{  return (const G42Point *)this;}/*-----------------------------------------------------------------------------	Function - operator G42Point *	Description:		Return an array of two points (upperleft and bottomright)-----------------------------------------------------------------------------*/inlineG42Rect::operator G42Point * (void){  return (G42Point *)this;}#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)/*-----------------------------------------------------------------------------	Function - operator TRect	Description:		Conversion operator to convert G42Rect to a Borland TRect-----------------------------------------------------------------------------*/inlineG42Rect::operator TRect (void) const{	return TRect(Left, Top, Right + 1, Bottom + 1);}#endif#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)/*-----------------------------------------------------------------------------	Function - operator tagRECT	Description:		Conversion operator to convert G42Rect to a Windows tagRECT-----------------------------------------------------------------------------*/inlineG42Rect::operator tagRECT (void) const{	tagRECT rect;	rect.left = Left;	rect.top = Top;	rect.right = Right + 1;	rect.bottom = Bottom + 1;	return rect;}#endif#if defined(MACOS)/*-----------------------------------------------------------------------------	Function - operator Rect for Macintosh	Description:		Conversion operator to convert G42Rect to a Mac Rect structure-----------------------------------------------------------------------------*/inlineG42Rect::operator Rect (void) const{	Rect rect;	::SetRect (&rect, Left, Top, Right, Bottom);	return rect;}#endif/*-----------------------------------------------------------------------------	Function - SetNull	Description:		Set all the data members to 0.-----------------------------------------------------------------------------*/inline voidG42Rect::SetNull (void){	Left = 0;	Top = 0;	Right = -1;	Bottom = -1;}/*-----------------------------------------------------------------------------	Function - SetEmpty	Description:		Create an empty rectangle.-----------------------------------------------------------------------------*/inline voidG42Rect::SetEmpty (void){	SetNull();}/*-----------------------------------------------------------------------------	Function - SetWH	Parameters:		int32 left,		int32 top		- The left and top sides of a rectangle.		int32 width,		int32 height	- The width and height of a rectangle.	Description:		Set the parameters based on the left, top, width and height-----------------------------------------------------------------------------*/inline voidG42Rect::SetWH (int32 left, int32 top, int32 width, int32 height){	Left = left;	Top = top;	Right = left + width - 1;	Bottom = top + height - 1;}/*-----------------------------------------------------------------------------	Function - IsEmpty	Description:		Return true if the rectangle is empty.  Really, returns true on		width or height zero or negitive.-----------------------------------------------------------------------------*/inline boolG42Rect::IsEmpty (void) const{  return (Left > Right || Top > Bottom);}/*-----------------------------------------------------------------------------	Function - IsNull	Description:		Return true if rectangle is 0 width and height at 0, 0-----------------------------------------------------------------------------*/inline boolG42Rect::IsNull (void) const{  return (!Left && !Right && Top == -1 && Bottom == -1);}/*-----------------------------------------------------------------------------	Function - operator ==	Description:		Return true if the points defining both rectangles are identical.-----------------------------------------------------------------------------*/inline boolG42Rect::operator == (const G42Rect & other) const{	return (Left == other.Left && Top == other.Top &&		Right == other.Right && Bottom == other.Bottom);}/*-----------------------------------------------------------------------------	Function - operator !=	Description:		Returns the opposite of operator ==.-----------------------------------------------------------------------------*/inline boolG42Rect::operator != (const G42Rect & other) const{	return (!(other == *this));}/*-----------------------------------------------------------------------------	Function - operator =	Parameters:		const G42Rect & other - The rectangle used to set the coordinates.	Description:		Assigns the coordinates of other to this rectangle-----------------------------------------------------------------------------*/inline G42Rect &G42Rect::operator = (const G42Rect & other){	Left = other.Left;	Top = other.Top;	Right = other.Right;	Bottom = other.Bottom;	return *this;}/*-----------------------------------------------------------------------------	Function - GetLeft	Description:		Return the Left value.-----------------------------------------------------------------------------*/inline int32G42Rect::GetLeft (void) const{	return Left;}/*-----------------------------------------------------------------------------	Function - GetTop	Description:		Return the Top value.-----------------------------------------------------------------------------*/inline int32G42Rect::GetTop (void) const{	return Top;}/*-----------------------------------------------------------------------------	Function - GetRight	Description:		Return the Right value.-----------------------------------------------------------------------------*/inline int32G42Rect::GetRight (void) const{	return Right;}/*-----------------------------------------------------------------------------	Function - GetBottom	Description:		Return the Bottom value.-----------------------------------------------------------------------------*/inline int32G42Rect::GetBottom (void) const{	return Bottom;}/*-----------------------------------------------------------------------------	Function - GetTopLeft	Description:		Return the upperleft point.-----------------------------------------------------------------------------*/inline G42PointG42Rect::GetTopLeft (void) const{	return G42Point(Left, Top);}/*-----------------------------------------------------------------------------	Function - GetTopRight	Description:		Return the upperright point.-----------------------------------------------------------------------------*/inline G42PointG42Rect::GetTopRight (void) const{	return G42Point(Right, Top);}/*-----------------------------------------------------------------------------	Function - GetBottomLeft	Description:		Return the lowerleft point.-----------------------------------------------------------------------------*/inline G42PointG42Rect::GetBottomLeft (void) const{	return G42Point(Left, Bottom);}/*-----------------------------------------------------------------------------	Function - GetBottomRight	Description:		Return the lowerright point.-----------------------------------------------------------------------------*/inline G42PointG42Rect::GetBottomRight (void) const{	return G42Point(Right, Bottom);}/*-----------------------------------------------------------------------------	Function - GetWidth	Description:		Return the width of the rectangle.-----------------------------------------------------------------------------*/inline int32G42Rect::GetWidth (void) const{	return Right - Left + 1;}/*-----------------------------------------------------------------------------	Function - GetWidthAbs	Description:		Return the normalized width of the rectangle.-----------------------------------------------------------------------------*/inline int32G42Rect::GetWidthAbs (void) const{	if (Right < Left)		return Left - Right - 1;	else		return GetWidth();}/*-----------------------------------------------------------------------------	Function - GetHeight	Description:		Return the height of the rectangle.-----------------------------------------------------------------------------*/inline int32G42Rect::GetHeight (void) const{	return Bottom - Top + 1;}/*-----------------------------------------------------------------------------	Function - GetHeightAbs	Description:		Return the normalized height of the rectangle.-----------------------------------------------------------------------------*/inline int32G42Rect::GetHeightAbs (void) const{	if (Bottom < Top)		return Top - Bottom - 1;	else		return GetHeight();}/*-----------------------------------------------------------------------------	Function - GetSize	Description:		Return the size of the rectangle.-----------------------------------------------------------------------------*/inline G42SizeG42Rect::GetSize (void) const{	return G42Size(GetWidth(), GetHeight());}/*-----------------------------------------------------------------------------	Function - GetArea	Description:		Return the area of the rectangle.-----------------------------------------------------------------------------*/inline int32G42Rect::GetArea (void) const{	return (GetWidth() * GetHeight());}/*-----------------------------------------------------------------------------	Function - Contains	Parameters:		const G42Point & point - The point to check.	Description:		Return true if the rectangle contains the point.-----------------------------------------------------------------------------*/inline boolG42Rect::Contains (const G42Point & point) const{	return (point.X >= Left && point.X <= Right &&		point.Y >= Top && point.Y <= Bottom);}/*-----------------------------------------------------------------------------	Function - Contains	Parameters:		const G42Rect & other - The rectangle to check.	Description:		Return true if the rectangle completely surrounds the other.-----------------------------------------------------------------------------*/inline boolG42Rect::Contains (const G42Rect & other) const{	return (other.Left >= Left && other.Right <= Right &&		other.Top >= Top && other.Bottom <= Bottom);}/*-----------------------------------------------------------------------------	Function - Touches	Parameters:		const G42Rect & other - The rectangle to check.	Description:		Return true if the intersection of two rectangles is not NULL.-----------------------------------------------------------------------------*/inline boolG42Rect::Touches (const G42Rect & other) const{	return (other.Right > Left && other.Left < Right		&& other.Bottom > Top && other.Top < Bottom);}/*-----------------------------------------------------------------------------	Function - OffsetBy	Parameters:		int32 dx,		int32 dy - The x and y offset to move the rectangle.	Description:		Move the points of the rectangle by the offsets.-----------------------------------------------------------------------------*/inline G42RectG42Rect::OffsetBy (int32 dx, int32 dy) const{	return G42Rect(Left + dx, Top + dy, Right + dx, Bottom + dy);}/*-----------------------------------------------------------------------------	Function - operator +	Parameters:		const G42Size & size - The offset expressed as a height and width.	Description:		Move the points of the rectangle by the offset.-----------------------------------------------------------------------------*/inline G42RectG42Rect::operator + (const G42Size & size) const{	return OffsetBy(size.Width, size.Height);}/*-----------------------------------------------------------------------------	Function - operator -	Parameters:		const G42Size & size - The offset expressed as a height and width.	Description:		Move the points of the rectangle negatively by the offset.-----------------------------------------------------------------------------*/inline G42RectG42Rect::operator - (const G42Size & size) const{	return OffsetBy(-size.Width, -size.Height);}/*-----------------------------------------------------------------------------	Function - MovedTo	Parameters:		int32 x,		int32 y - The point where the upper left will be moved.	Description:		Move the upper left point of the rectangle while maintaining the		current dimension.-----------------------------------------------------------------------------*/inline G42RectG42Rect::MovedTo (int32 x, int32 y) const{  return G42Rect(x, y, x + GetWidth() - 1, y + GetHeight() - 1);}/*-----------------------------------------------------------------------------	Function - InflatedBy	Parameters:		int32 dx - The amount added to the left and right sides of the rectangle.		int32 dy - The amount added to the top and bottom sides of the rectangle.	Description:		Inflate the size of the rectangle.-----------------------------------------------------------------------------*/inline G42RectG42Rect::InflatedBy (int32 dx, int32 dy) const{	return G42Rect(Left - dx, Top - dy, Right + dx, Bottom + dy);}/*-----------------------------------------------------------------------------	Function - InflatedBy	Parameters:		const G42Size & size -	The amount added to the sides of the rectangle										as expressed as a height and width.	Description:		Inflate the size of the rectangle.-----------------------------------------------------------------------------*/inline G42RectG42Rect::InflatedBy (const G42Size & size) const{	return G42Rect(Left - size.Width, Top - size.Height, Right + size.Width,		Bottom + size.Height);}/*-----------------------------------------------------------------------------	Function - Normalized	Description:		Normalize the rectangle, such that left is less than right and top is		less than bottom.-----------------------------------------------------------------------------*/inline G42RectG42Rect::Normalized (void) const{	int32 left, right, top, bottom;	if (Right < Left)	{		left = Right + 1;		right = Left - 1;	}	else	{		left = Left;		right = Right;	}	if (Bottom < Top)	{		top = Bottom + 1;		bottom = Top - 1;	}	else	{		top = Top;		bottom = Bottom;	}	return G42Rect(left, top, right, bottom);}/*-----------------------------------------------------------------------------	Function - operator &	Parameters:		const G42Rect & other - The rectangle to intersect with.	Description:		Return the intersection of two rectangles.-----------------------------------------------------------------------------*/inline G42RectG42Rect::operator &(const G42Rect & other) const{	if (Touches(other))		return G42Rect(max(Left, other.Left), max(Top, other.Top),			min(Right, other.Right), min(Bottom, other.Bottom));  return G42Rect(0, 0, 0, 0);}/*-----------------------------------------------------------------------------	Function - operator |	Parameters:		const G42Rect & other - The rectangle to union with.	Description:		Return the union of two rectangles.-----------------------------------------------------------------------------*/inline G42RectG42Rect::operator |(const G42Rect & other) const{	return G42Rect(min(Left, other.Left), min(Top, other.Top),		max(Right, other.Right), max(Bottom, other.Bottom));}/*-----------------------------------------------------------------------------	Function - subtract	Parameters:		const G42Rect& other	- 	The rectangle to subtract.		G42Rect result[]		- 	An array that will contain the resulting										rectangles after the subtraction.	Description:		Determines the parts of this rect that do not lie within "other".		Returns the resulting number of rectangles which will be in the		range "0 .. 4" inclusive.  Resulting rectangles are placed in the		"result" array.-----------------------------------------------------------------------------*/inline int32G42Rect::Subtract (const G42Rect& other, G42Rect result[]) const{	// Case of non-intersection, result is just this rectangle	//	if (!Touches(other))	{		result[0] = *this;		return 1;	}	// Check for up to four sub-rectangles produced	//	int  i = 0;	// Top piece of this rect	//	if (other.Top > Top)	{		result[i].Left = Left;		result[i].Top = Top;		result[i].Right = Right;		result[i].Bottom = other.Top;		i++;	}	// Bottom piece of this rect	//	if (other.Bottom < Bottom)	{		result[i].Left = Left;		result[i].Top = other.Bottom;		result[i].Right = Right;		result[i].Bottom = Bottom;		i++;	}	// Left piece of this rect	//	if (other.Left > Left)	{		result[i].Left = Left;		result[i].Top = max(Top, other.Top);		result[i].Right = other.Left;		result[i].Bottom = min(Bottom, other.Bottom);		i++;	}	// Right piece of this rect	//	if (other.Right < Right)	{		result[i].Left = other.Right;		result[i].Top = max(Top, other.Top);		result[i].Right = Right;		result[i].Bottom = min(Bottom, other.Bottom);		i++;	}	return i;}/*-----------------------------------------------------------------------------	Function - Normalize	Description:		Normalize the rectangle so that left is less than right and top is less		than bottom.-----------------------------------------------------------------------------*/inline G42Rect &G42Rect::Normalize (void){	if (Right < Left)	{		int32 temp = Left;		Left = Right + 1;		Right = temp - 1;	}	if (Bottom < Top)	{		int32 temp = Top;		Top = Bottom + 1;		Bottom = temp - 1;	}	return *this;}/*-----------------------------------------------------------------------------	Function - Offset	Parameters:		int32 dx,		int32 dy - The x and y offsets.	Description:		Move the points of the rectangle by the offsets.-----------------------------------------------------------------------------*/inline G42Rect &G42Rect::Offset (int32 dx, int32 dy){	Left += dx;	Top += dy;	Right += dx;	Bottom += dy;	return *this;}/*-----------------------------------------------------------------------------	Function - operator +=	Parameters:		const G42Size & delta - The offset expressed as width and height.	Description:		Increases the width and height of this rectangle-----------------------------------------------------------------------------*/inline G42Rect &G42Rect::operator += (const G42Size & delta){	Offset(delta.Width, delta.Height);	return *this;}/*-----------------------------------------------------------------------------	Function - operator -=	Parameters:		const G42Size & delta - The offset expressed as width and height.	Description:		Move the points of the rectangle negatively by the offset.-----------------------------------------------------------------------------*/inline G42Rect &G42Rect::operator -= (const G42Size & delta){	Offset(-delta.Width, -delta.Height);	return *this;}/*-----------------------------------------------------------------------------	Function - MoveTo	Parameters:		int32 x,		int32 y - The point where the upper left will be moved.	Description:		Moves the left and top points to the new location while maintaining the		width and height-----------------------------------------------------------------------------*/inline G42Rect &G42Rect::MoveTo (int32 x, int32 y){	Right = x + GetWidth() - 1;	Bottom = y + GetHeight() - 1;	Left = x;	Top = y;	return *this;}/*-----------------------------------------------------------------------------	Function - Inflate	Parameters:		int32 dx - The amount added to the left and right sides of the rectangle.		int32 dy - The amount added to the top and bottom sides of the rectangle.	Description:		Increases/decreases the size of this rectangle-----------------------------------------------------------------------------*/inline G42Rect &G42Rect::Inflate (int32 dx, int32 dy){	Left -= dx;	Top -= dy;	Right += dx;	Bottom += dy;	return *this;}/*-----------------------------------------------------------------------------	Function - Inflate	Parameters:		const G42Size & delta -	The amount added to the sides of the rectangle										as expressed as a height and width.	Description:		Increases/decreases the size of this rectangle-----------------------------------------------------------------------------*/inline G42Rect &G42Rect::Inflate (const G42Size & delta){	return Inflate(delta.Width, delta.Height);}/*-----------------------------------------------------------------------------	Function - operator &=	Parameters:		const G42Rect & other -	The rectangle to intersect with.	Description:		Return the largest rectangle that is common to both rectangles.-----------------------------------------------------------------------------*/inline G42Rect &G42Rect::operator &= (const G42Rect & other){	if (!IsNull())	{		if (other.IsNull())			SetNull();		else		{			Left = max(Left, other.Left);			Top = max(Top, other.Top);			Right = min(Right, other.Right);			Bottom = min(Bottom, other.Bottom);		}	}	return *this;}/*-----------------------------------------------------------------------------	Function - operator |=	Parameters:		const G42Rect & other -	The rectangle to union with.	Description:		Return the smallest rectangle that contains both rectangles.-----------------------------------------------------------------------------*/inline G42Rect &G42Rect::operator |= (const G42Rect & other){	if (!other.IsNull())	{		if (IsNull())			*this = other;		else		{			Left = min(Left, other.Left);			Top = min(Top, other.Top);			Right = max(Right, other.Right);			Bottom = max(Bottom, other.Bottom);		}	}	return *this;}/*-----------------------------------------------------------------------------	Function - MakeProportional	Parameters:			Description: Resize the rectangle to 1.0 aspect	Warning:  	 Normalizes the rectangle-----------------------------------------------------------------------------*/inline G42Rect &G42Rect::MakeProportional (G42RectCorner corner){	//  Have to normalize because of the meaning of corners	Normalize();	int32 width  = Right - Left;	int32 height = Bottom - Top;	if (width && height)	{		int32 adj_x = 0, adj_y = 0;		/*  Calculate adjustment  */		if (width > height) 		{			adj_x = height - width;		}		else 		{			adj_y = width - height;		}											if (corner == G42Rect::TopLeft)		{			Top  -= adj_y;			Left -= adj_x;		}		else if (corner == G42Rect::TopRight)		{			Top   -= adj_y;			Right += adj_x;		}		else if (corner == G42Rect::BottomLeft)		{			Bottom += adj_y;			Left   -= adj_x;		}		else	// Must be BottomRight		{			Bottom += adj_y;			Right  += adj_x;		}	}	return *this;}/*-----------------------------------------------------------------------------	Function - ResizeProportional	Parameters:		aspect_ratio		The ratio (height / width) of the desired rectangle		change				The side or corner to move to achieve the aspect ratio	Description: Adjusts a retangle to the given aspect ratio	Warning:  	 Normalizes the rectangle-----------------------------------------------------------------------------*/inlineG42Rect &G42Rect::ResizeProportional (double aspect_ratio, uintf change){	//  Have to normalize because of the meaning of corners	Normalize();	if (change == G42RectChangeLeft || change == G42RectChangeRight ||		change == G42RectChangeWidth)	{		int32 offset = GetWidth() -			(int32)((double)GetHeight() / aspect_ratio + 0.5);		if (change == G42RectChangeLeft)		{			Left += offset;		}		else if (change == G42RectChangeRight)		{			Right -= offset;		}		else		{			Left += (offset >> 1);			Right -= offset - (offset >> 1);		}	}	else if (change == G42RectChangeTop || change == G42RectChangeBottom ||		change == G42RectChangeHeight)	{		int32 offset = GetHeight() -			(int32)((double)GetWidth() * aspect_ratio + 0.5);		if (change == G42RectChangeTop)		{			Top += offset;		}		else if (change == G42RectChangeBottom)		{			Bottom -= offset;		}		else		{			Top += (offset >> 1);			Bottom -= offset - (offset >> 1);		}	}	else // one of the corners	{		int32 y_offset = (int32)((double)GetWidth() * aspect_ratio + 0.5) -			GetHeight();		if (y_offset > 0)		{			if (change & G42RectChangeTop)			{				Top -= y_offset;			}			else			{				Bottom += y_offset;			}		}		else		{			int32 x_offset = (int32)((double)GetHeight() / aspect_ratio + 0.5) -				GetWidth();			if (change & G42RectChangeLeft)			{				Left -= x_offset;			}			else			{				Right += x_offset;			}		}	}	return *this;}// Do not add anything past this line#endif //GGEOMTRY_H Sentry
+/*-----------------------------------------------------------------------------
+	file:	 		ggeometry.h
+	author:		Jonathan Schafer
+	classes:		G42Point, G42Size, G42Rect
+	date:			10/6/96
+	revision:	3.0
+	This file includes three classes for creating and manipulating rectangles,
+	points, and sizes.  They are essentially based on Windows' tagRECT,
+	tagPOINT, and tagSIZE although they are not derived from those structs.
+	Conversion operators are provided to/from the Windows structs as well as Mac
+	rectangles, points, and sizes.
+	Conversion to/from operators are also provided for Borland's TRect, TPoint,
+	and TSize classes.  Note that Borland's TRect and Windows' tagRECT
+	right and bottom parameters include the outer edge in their rectangle while
+	the G42Rect class does not. When converting to/from Borland TRect and
+	Windows tagRECT, (1, 1) is added or subtracted from the right and bottom
+	parameters as necessary.
+-----------------------------------------------------------------------------*/
+// Compiler directives
+#if !defined(GGEOMTRY_H)
+#define GGEOMTRY_H
+#include "gtype.h"
+#include "gtools.h"
+#ifdef MACOS
+#include "quickdraw.h"
+#endif
+// Forward declarations
+class G42Point;
+/*-----------------------------------------------------------------------------
+	class G42Size
+-----------------------------------------------------------------------------*/
+class G42Size
+{
+public:
+	// Constructors
+	G42Size (void);
+	G42Size (int32 dx, int32 dy);
+	G42Size (const G42Point & point);
+	G42Size (const G42Size & ref);
+	G42Size (uint32 size);
+#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)
+	G42Size (const tagSIZE far & size);
+	G42Size (const tagPOINT far & point);
+#endif
+#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)
+	G42Size (const TSize far & size);
+	G42Size (const TPoint far & point);
+#endif
+	// Information functions/operators
+	bool operator == (const G42Size & other) const;
+	bool operator != (const G42Size & other) const;
+	int32 GetWidth (void) const;
+	int32 GetHeight (void) const;
+	int32 Magnitude (void) const;
+	// Conversion operators
+#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)
+	operator tagPOINT (void) const;
+	operator tagSIZE (void) const;
+#endif
+#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)
+	operator TPoint (void) const;
+	operator TSize (void) const;
+#endif
+	// Functions/binary operators that return sizes
+	G42Size operator + (const G42Size & size) const;
+	G42Size operator - (const G42Size & size) const;
+	G42Size operator - (void) const;
+	// Functions/assignment operators that modify this size
+	G42Size & operator = (const G42Size & size);
+	G42Size & operator += (const G42Size & size);
+	G42Size & operator -= (const G42Size & size);
+	// Useful for Mac stuff
+	void Set (int32 width, int32 height);
+	// Data members
+	int32 Width;
+	int32 Height;
+};
+/*-----------------------------------------------------------------------------
+	class G42Point
+-----------------------------------------------------------------------------*/
+class G42Point
+{
+public:
+	// Constructors
+	G42Point (void);
+	G42Point (int32 x, int32 y);
+	G42Point (const G42Point & ref);
+	G42Point (const G42Size & size);
+	G42Point (uint32 point);
+#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)
+	G42Point (const tagPOINT far & point);
+	G42Point (const tagSIZE far & size);
+#endif
+#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)
+	G42Point (const TPoint far & point);
+	G42Point (const TSize far & size);
+#endif
+	// Assignment operators
+#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)
+	operator tagPOINT (void) const;
+	operator tagSIZE (void) const;
+#endif
+#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)
+	operator TPoint (void) const;
+	operator TSize (void) const;
+#endif
+	// Information functions/operators
+	bool operator == (const G42Point & other) const;
+	bool operator != (const G42Point & other) const;
+	int32 GetX (void) const;
+	int32 GetY (void) const;
+	int32 Magnitude (void) const;
+	// Functions/binary operators that return points or sizes
+	G42Point OffsetBy (int32 dx, int32 dy) const;
+	G42Point operator + (const G42Size & size) const;
+	G42Point operator - (const G42Size & size) const;
+	G42Point operator - (void) const;
+	// Functions/assignment operators that modify this point
+	G42Point & Offset (int32 dx, int32 dy);
+	G42Point & operator = (const G42Point & ref);
+	G42Point & operator += (const G42Size & size);
+	G42Point & operator -= (const G42Size & size);
+	// Useful for Mac stuff
+	void Set (int32 x, int32 y);
+	// Data members
+	int32 X;
+	int32 Y;
+};
+/*-----------------------------------------------------------------------------
+	class G42Rect
+-----------------------------------------------------------------------------*/
+// These are constants that are used by the proportional functions of G42Rect.
+// They are const uintfs instead of an enum because mathmatical and bitwise
+// operations are done with them, which causes warnings on some compilers if
+// we use enums.
+const uintf G42RectChangeLeft = 0x1;
+const uintf G42RectChangeRight = 0x2;
+const uintf G42RectChangeTop = 0x4;
+const uintf G42RectChangeBottom = 0x8;
+const uintf G42RectChangeTopLeft = 0x5; // these are made up of or-ing
+const uintf G42RectChangeTopRight = 0x6; // the above values
+const uintf G42RectChangeBottomLeft = 0x9;
+const uintf G42RectChangeBottomRight = 0xa;
+const uintf G42RectChangeWidth = 0x10;
+const uintf G42RectChangeHeight = 0x20;
+class G42Rect
+{
+public:
+	// Constructors
+	G42Rect (void);
+	G42Rect (int32 left, int32 top, int32 right, int32 bottom);
+	G42Rect (const G42Rect & ref);
+	G42Rect (const G42Point & topLeft, const G42Point & bottomRight);
+	G42Rect (const G42Point & origin, const G42Size & extent);
+	//  Enum for proportional functions
+	enum G42RectCorner {TopLeft, TopRight, BottomLeft, BottomRight};
+#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)
+	G42Rect (const tagRECT far & rect);
+#endif
+#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)
+	G42Rect (const TRect & rect);
+#endif
+#ifdef MACOS
+	G42Rect (const Rect & rect);
+#endif
+	// Type conversion operators
+	operator const G42Point * (void) const;
+	operator G42Point * (void);
+#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)
+	operator TRect(void) const;
+#endif
+#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)
+	operator tagRECT (void) const;
+#endif
+#ifdef MACOS
+	operator Rect (void) const;
+#endif
+	// (Re)Initializers
+	void SetNull (void);
+	void SetEmpty (void);
+	void Set (int32 left, int32 top, int32 right, int32 bottom);
+	void SetWH (int32 left, int32 top, int32 width, int32 height);
+	// Testing functions
+	bool IsEmpty (void) const;
+	bool IsNull (void) const;
+	bool operator == (const G42Rect & other) const;
+	bool operator != (const G42Rect & other) const;
+	// Information/access functions (const and non-const)
+	int32 GetLeft (void) const;
+	int32 GetTop (void) const;
+	int32 GetRight (void) const;
+	int32 GetBottom (void) const;
+	G42Point GetTopLeft (void) const;
+	G42Point GetTopRight (void) const;
+	G42Point GetBottomLeft (void) const;
+	G42Point GetBottomRight (void) const;
+	int32 GetWidth (void) const;
+	int32 GetWidthAbs (void) const;
+	int32 GetHeight (void) const;
+	int32 GetHeightAbs (void) const;
+	G42Size GetSize (void) const;
+	int32 GetArea (void) const;
+	bool Contains (const G42Point & point) const;
+	bool Contains (const G42Rect & rect) const;
+	bool Touches (const G42Rect & other) const;
+	G42Rect OffsetBy (int32 dx, int32 dy) const;
+	G42Rect operator + (const G42Size & size) const;
+	G42Rect operator - (const G42Size & size) const;
+	G42Rect MovedTo (int32 x, int32 y) const;
+	G42Rect InflatedBy (int32 dx, int32 dy) const;
+	G42Rect InflatedBy (const G42Size & size) const;
+	G42Rect Normalized (void) const;
+	G42Rect operator & (const G42Rect & other) const;
+	G42Rect operator | (const G42Rect & other) const;
+	int32 Subtract (const G42Rect & other, G42Rect result[]) const;
+	// Manipulation functions/operators
+	G42Rect & Normalize (void);
+	G42Rect & operator = (const G42Rect & ref);
+	G42Rect & Offset (int32 dx, int32 dy);
+	G42Rect & operator += (const G42Size & delta);
+	G42Rect & operator -= (const G42Size & delta);
+	G42Rect & MoveTo (int32 x, int32 y);
+	G42Rect & Inflate (int32 dx, int32 dy);
+	G42Rect & Inflate (const G42Size & delta);
+	G42Rect & operator &= (const G42Rect & other);
+	G42Rect & operator |= (const G42Rect & other);
+	G42Rect & MakeProportional (G42RectCorner corner = BottomRight);
+	G42Rect & ResizeProportional (double aspect_ratio,
+		uintf change = G42RectChangeBottomRight);
+	// Data members
+	int32 Left;
+	int32 Top;
+	int32 Right;
+	int32 Bottom;
+};
+/*-----------------------------------------------------------------------------
+	G42Size inline functions:
+-----------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------
+	Function - G42Size constructor
+	Description:
+		Default constructor that does nothing
+-----------------------------------------------------------------------------*/
+inline
+G42Size::G42Size (void)
+{
+}
+/*-----------------------------------------------------------------------------
+	Function - G42Size constructor
+	Parameters:
+		const G42Point & point - The point to use for width and height.
+	Description:
+		Constructor that sets the width and height based on a point
+-----------------------------------------------------------------------------*/
+inline
+G42Size::G42Size (const G42Point & point)
+{
+	Width = point.X;
+	Height = point.Y;
+}
+/*-----------------------------------------------------------------------------
+	Function - G42Size constructor
+	Parameters:
+		int32 dx,
+		int32 dy - The width and height.
+	Description:
+		Constructor that sets the size based on a width and height
+-----------------------------------------------------------------------------*/
+inline
+G42Size::G42Size (int32 dx, int32 dy)
+{
+	Width = dx;
+	Height = dy;
+}
+/*-----------------------------------------------------------------------------
+	Function - G42Size constructor
+	Parameters:
+		const G42Size & ref - The size being duplicated.
+	Description:
+		Copy constructor
+-----------------------------------------------------------------------------*/
+inline
+G42Size::G42Size (const G42Size & ref)
+{
+	Width = ref.Width;
+	Height = ref.Height;
+}
+/*-----------------------------------------------------------------------------
+	Function - G42Size constructor
+	Parameters:
+		uint32 size - The size expressed as a packed point.
+	Description:
+		Create a size object from a packed point.  This assumes the x coordinate
+		is in the low 16-bits and the y coordinate is in the high 16-bits.
+-----------------------------------------------------------------------------*/
+inline
+G42Size::G42Size (uint32 size)
+{
+  Width = (int16)size;
+  Height = (int16)(size >> 16);
+}
+#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)
+/*-----------------------------------------------------------------------------
+	Function - G42Size constructor
+	Parameters:
+		const tagSIZE far & size - A Windows tagSIZE size.
+	Description:
+		Constructor based on a Windows tagSIZE.
+-----------------------------------------------------------------------------*/
+inline
+G42Size::G42Size (const tagSIZE far & size)
+{
+	Width = size.cx;
+	Height = size.cy;
+}
+/*-----------------------------------------------------------------------------
+	Function - G42Size constructor
+	Parameters:
+		const tagPOINT far & point - A Windows tagPOINT point.
+	Description:
+		Constructor based on a Windows tagPOINT.
+-----------------------------------------------------------------------------*/
+inline
+G42Size::G42Size (const tagPOINT far & point)
+{
+	Width = point.x;
+	Height = point.y;
+}
+#endif
+#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)
+/*-----------------------------------------------------------------------------
+	Function - G42Size constructor
+	Parameters:
+		const TSize far & size - A Borland TSize size.
+	Description:
+		Constructor based on a Borland TSize.
+-----------------------------------------------------------------------------*/
+inline
+G42Size::G42Size (const TSize far & size)
+{
+	Width = size.cx;
+	Height = size.cy;
+}
+/*-----------------------------------------------------------------------------
+	Function - G42Size constructor
+	Parameters:
+		const TPoint far & point - A Borland TPoint point.
+	Description:
+		Constructor based on a Borland TPoint.
+-----------------------------------------------------------------------------*/
+inline
+G42Size::G42Size (const TPoint far & point)
+{
+	Width = point.x;
+	Height = point.y;
+}
+#endif
+/*-----------------------------------------------------------------------------
+	Function - operator ==
+	Parameters:
+		const G42Size & other - The size being compared.
+	Description:
+		Returns true if two sizes are equal.
+-----------------------------------------------------------------------------*/
+inline bool
+G42Size::operator == (const G42Size & other) const
+{
+	return (other.Width == Width && other.Height == Height);
+}
+/*-----------------------------------------------------------------------------
+	Function - operator !=
+	Parameters:
+		const G42Size & other - The size being compared.
+	Description:
+		Returns the opposite of operator ==.
+-----------------------------------------------------------------------------*/
+inline bool
+G42Size::operator != (const G42Size & other) const
+{
+	return (!(other == *this));
+}
+/*-----------------------------------------------------------------------------
+	Function - GetWidth
+	Description:
+		Returns the width.
+-----------------------------------------------------------------------------*/
+inline int32
+G42Size::GetWidth (void) const
+{
+	return Width;
+}
+/*-----------------------------------------------------------------------------
+	Function - GetHeight
+	Description:
+		Returns the height.
+-----------------------------------------------------------------------------*/
+inline int32
+G42Size::GetHeight (void) const
+{
+	return Height;
+}
+/*-----------------------------------------------------------------------------
+	Function - Magnitude
+	Description:
+		Computes the magnitude by calculating the square root of the location
+		from origin (0,0)
+-----------------------------------------------------------------------------*/
+inline int32
+G42Size::Magnitude (void) const
+{
+	int32 val = Width * Width + Height * Height;
+	if (val <= 0)
+		return 0;     // Could throw a math exception?
+	return G42SquareRoot(val);
+}
+#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)
+/*-----------------------------------------------------------------------------
+	Function - operator tagPOINT
+	Description:
+		Converts this size to a Windows tagPOINT.
+-----------------------------------------------------------------------------*/
+inline
+G42Size::operator tagPOINT (void) const
+{
+	tagPOINT point;
+	point.x = Width;
+	point.y = Height;
+	return point;
+}
+/*-----------------------------------------------------------------------------
+	Function - operator tagSIZE
+	Description:
+		Converts this size to a Windows tagSIZE.
+-----------------------------------------------------------------------------*/
+inline
+G42Size::operator tagSIZE (void) const
+{
+	tagSIZE size;
+	size.cx = Width;
+	size.cy = Height;
+	return size;
+}
+#endif
+#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)
+/*-----------------------------------------------------------------------------
+	Function - operator TPoint
+	Description:
+		Converts this size to a Borland TPoint.
+-----------------------------------------------------------------------------*/
+inline
+G42Size::operator TPoint (void) const
+{
+	return TPoint(Width, Height);
+}
+/*-----------------------------------------------------------------------------
+	Function - operator TSize
+	Description:
+		Converts this size to a Borland TSize.
+-----------------------------------------------------------------------------*/
+inline
+G42Size::operator TSize (void) const
+{
+	return TSize(Width, Height);
+}
+#endif
+/*-----------------------------------------------------------------------------
+	Function - operator +
+	Parameters:
+		const G42Size & size - The size to increment by.
+	Description:
+		Returns the current size incremented by size.
+-----------------------------------------------------------------------------*/
+inline G42Size
+G42Size::operator + (const G42Size & size) const
+{
+	return G42Size(Width + size.Width, Height + size.Height);
+}
+/*-----------------------------------------------------------------------------
+	Function - operator -
+	Parameters:
+		const G42Size & size - The size to decrement by.
+	Description:
+		Returns the current size decremented by size.
+-----------------------------------------------------------------------------*/
+inline G42Size
+G42Size::operator - (const G42Size & size) const
+{
+	return G42Size(Width - size.Width, Height - size.Height);
+}
+/*-----------------------------------------------------------------------------
+	Function - operator -
+	Description:
+		Returns the inverse of this size.
+-----------------------------------------------------------------------------*/
+inline G42Size
+G42Size::operator - (void) const
+{
+	return G42Size(-Width, -Height);
+}
+/*-----------------------------------------------------------------------------
+	Function - operator =
+	Parameters:
+		const G42Size & size - The size to set equal to.
+	Description:
+		Sets this size to size.
+-----------------------------------------------------------------------------*/
+inline G42Size &
+G42Size::operator = (const G42Size & size)
+{
+	Width = size.Width;
+	Height = size.Height;
+	return *this;
+}
+/*-----------------------------------------------------------------------------
+	Function - operator +=
+	Parameters:
+		const G42Size & size - The size to increase by.
+	Description:
+		Returns this size increased by size.
+-----------------------------------------------------------------------------*/
+inline G42Size &
+G42Size::operator += (const G42Size & size)
+{
+	Width += size.Width;
+	Height += size.Height;
+	return *this;
+}
+/*-----------------------------------------------------------------------------
+	Function - operator -=
+	Parameters:
+		const G42Size & size - The size to decrease by.
+	Description:
+		Returns this size decreased by size.
+-----------------------------------------------------------------------------*/
+inline G42Size &
+G42Size::operator -= (const G42Size & size)
+{
+	Width -= size.Width;
+	Height -= size.Height;
+	return *this;
+}
+/*-----------------------------------------------------------------------------
+	Function - Set
+	Parameters:
+		int32 width
+		int32 height
+		Description:
+		Explicitly set the values of the size.
+-----------------------------------------------------------------------------*/
+inline void
+G42Size::Set (int32 width, int32 height)
+{
+	Width 	= width;
+	Height 	= height;
+}
+/*-----------------------------------------------------------------------------
+	G42Point inline functions:
+-----------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------
+	Function - G42Point constructor
+	Description:
+		Default constructor that does nothing
+-----------------------------------------------------------------------------*/
+inline
+G42Point::G42Point (void)
+{
+}
+/*-----------------------------------------------------------------------------
+	Function - G42Point constructor
+	Parameters:
+		int32 x,
+		int32 y - The x and y value for the point.
+	Description:
+		Constructor based on two int32s
+-----------------------------------------------------------------------------*/
+inline
+G42Point::G42Point (int32 x, int32 y)
+{
+	X = x;
+	Y = y;
+}
+/*-----------------------------------------------------------------------------
+	Function - G42Point constructor
+	Parameters:
+		const G42Point & ref - The point being duplicated.
+	Description:
+		Copy constructor
+-----------------------------------------------------------------------------*/
+inline
+G42Point::G42Point (const G42Point & ref)
+{
+	X = ref.X;
+	Y = ref.Y;
+}
+/*-----------------------------------------------------------------------------
+	Function - G42Point constructor
+	Parameters:
+		const G42Size & size - The point expressed as a size.
+	Description:
+		Constructor based on a size
+-----------------------------------------------------------------------------*/
+inline
+G42Point::G42Point (const G42Size & size)
+{
+	X = size.Width;
+	Y = size.Height;
+}
+/*-----------------------------------------------------------------------------
+	Function - G42Point constructor
+	Parameters:
+		uint32 point - The point expressed as a packed point.
+	Description:
+		Create a point object from a packed point.  This assumes the x coordinate
+		is in the low 16-bits and the y coordinate is in the high 16-bits.
+-----------------------------------------------------------------------------*/
+inline
+G42Point::G42Point (uint32 point)
+{
+  X = (int16)point;
+  Y = (int16)(point >> 16);
+}
+//
+// Constructor based on a Windows tagPOINT
+//
+#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)
+/*-----------------------------------------------------------------------------
+	Function - G42Point constructor
+	Parameters:
+		const tagPOINT far & point - A Windows tagPOINT point.
+	Description:
+		Constructor based on a Windows tagPOINT.
+-----------------------------------------------------------------------------*/
+inline
+G42Point::G42Point (const tagPOINT far & point)
+{
+	X = point.x;
+	Y = point.y;
+}
+/*-----------------------------------------------------------------------------
+	Function - G42Point constructor
+	Parameters:
+		const tagSIZE far & size - A Windows tagSIZE size.
+	Description:
+		Constructor based on a Windows tagSIZE.
+-----------------------------------------------------------------------------*/
+inline
+G42Point::G42Point (const tagSIZE far & size)
+{
+	X = size.cx;
+	Y = size.cy;
+}
+#endif
+#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)
+/*-----------------------------------------------------------------------------
+	Function - G42Point constructor
+	Parameters:
+		const TPoint far & point - A Borland TPoint point.
+	Description:
+		Constructor based on a Borland TPoint.
+-----------------------------------------------------------------------------*/
+inline
+G42Point::G42Point (const TPoint far & point)
+{
+	X = point.x;
+	Y = point.y;
+}
+/*-----------------------------------------------------------------------------
+	Function - G42Point constructor
+	Parameters:
+		const TSize far & size - A Borland TSize size.
+	Description:
+		Constructor based on a Borland TSize.
+-----------------------------------------------------------------------------*/
+inline
+G42Point::G42Point (const TSize far & size)
+{
+	X = size.cx;
+	Y = size.cy;
+}
+#endif
+/*-----------------------------------------------------------------------------
+	Function - operator =
+	Parameters:
+		const G42Point & other - The point to set equal to.
+	Description:
+		Sets this point to other.
+-----------------------------------------------------------------------------*/
+inline G42Point &
+G42Point::operator = (const G42Point & other)
+{
+	X = other.X;
+	Y = other.Y;
+	return *this;
+}
+#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)
+/*-----------------------------------------------------------------------------
+	Function - operator tagPOINT
+	Description:
+		Converts this point to a Windows tagPOINT.
+-----------------------------------------------------------------------------*/
+inline
+G42Point::operator tagPOINT (void) const
+{
+	tagPOINT point;
+	point.x = X;
+	point.y = Y;
+	return point;
+}
+/*-----------------------------------------------------------------------------
+	Function - operator tagSIZE
+	Description:
+		Converts this point to a Windows tagSIZE.
+-----------------------------------------------------------------------------*/
+inline
+G42Point::operator tagSIZE (void) const
+{
+	tagSIZE size;
+	size.cx = X;
+	size.cy = Y;
+	return size;
+}
+#endif
+#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)
+/*-----------------------------------------------------------------------------
+	Function - operator TPoint
+	Description:
+		Converts this point to a Borland TPoint.
+-----------------------------------------------------------------------------*/
+inline
+G42Point::operator TPoint (void) const
+{
+	return TPoint(X, Y);
+}
+/*-----------------------------------------------------------------------------
+	Function - operator TSize
+	Description:
+		Converts this point to a Borland TSize.
+-----------------------------------------------------------------------------*/
+inline
+G42Point::operator TSize (void) const
+{
+	return TSize(X, Y);
+}
+#endif
+/*-----------------------------------------------------------------------------
+	Function - operator ==
+	Parameters:
+		const G42Point & other - The point being compared.
+	Description:
+		Returns true if two points are equal.
+-----------------------------------------------------------------------------*/
+inline bool
+G42Point::operator == (const G42Point & other) const
+{
+	return (other.X == X && other.Y == Y) ? true : false;
+}
+/*-----------------------------------------------------------------------------
+	Function - operator !=
+	Parameters:
+		const G42Point & other - The point being compared.
+	Description:
+		Returns the opposite of operator ==.
+-----------------------------------------------------------------------------*/
+inline bool
+G42Point::operator != (const G42Point & other) const
+{
+	return (!(other == *this));
+}
+/*-----------------------------------------------------------------------------
+	Function - GetX
+	Description:
+		Returns the x coordinate.
+-----------------------------------------------------------------------------*/
+inline int32
+G42Point::GetX (void) const
+{
+	return X;
+}
+/*-----------------------------------------------------------------------------
+	Function - GetY
+	Description:
+		Returns the y coordinate.
+-----------------------------------------------------------------------------*/
+inline int32
+G42Point::GetY (void) const
+{
+	return Y;
+}
+/*-----------------------------------------------------------------------------
+	Function - Magnitude
+	Description:
+		Computes the magnitude by calculating the square root of the location
+		from origin (0,0)
+-----------------------------------------------------------------------------*/
+inline int32
+G42Point::Magnitude (void) const
+{
+	int32 val = X * X + Y * Y;
+	if (val <= 0)
+		return 0;     // Could throw a math exception?
+	return G42SquareRoot(val);
+}
+/*-----------------------------------------------------------------------------
+	Function - OffsetBy
+	Parameters:
+		int32 dx,
+		int32 dy - The amount to offset.
+	Description:
+		Returns a new point calculated from this point plus the offset.
+-----------------------------------------------------------------------------*/
+inline G42Point
+G42Point::OffsetBy (int32 dx, int32 dy) const
+{
+	return G42Point(X + dx, Y + dy);
+}
+/*-----------------------------------------------------------------------------
+	Function - operator +
+	Parameters:
+		const G42Size & size - The amount to offset expressed as a size.
+	Description:
+		Returns a new point calculated from this point plus the offset.
+-----------------------------------------------------------------------------*/
+inline G42Point
+G42Point::operator + (const G42Size & size) const
+{
+	return OffsetBy(size.Width, size.Height);
+}
+/*-----------------------------------------------------------------------------
+	Function - operator -
+	Parameters:
+		const G42Size & size - The amount to offset expressed as a size.
+	Description:
+		Returns a new point calculated from this point minus the offset.
+-----------------------------------------------------------------------------*/
+inline G42Point
+G42Point::operator - (const G42Size & size) const
+{
+	return OffsetBy(-size.Width, -size.Height);
+}
+/*-----------------------------------------------------------------------------
+	Function - operator -
+	Description:
+		Returns the inverse of this point.
+-----------------------------------------------------------------------------*/
+inline G42Point
+G42Point::operator - (void) const
+{
+	return (-X, -Y);
+}
+/*-----------------------------------------------------------------------------
+	Function - Offset
+	Parameters:
+		int32 dx,
+		int32 dy - The amount to offset.
+	Description:
+		Moves this point by the offset
+-----------------------------------------------------------------------------*/
+inline G42Point &
+G42Point::Offset (int32 dx, int32 dy)
+{
+	X += dx;
+	Y += dy;
+	return *this;
+}
+/*-----------------------------------------------------------------------------
+	Function - operator +=
+	Parameters:
+		const G42Size & size - The amount to offset expressed as a size.
+	Description:
+		Moves this point by the offset
+-----------------------------------------------------------------------------*/
+inline G42Point &
+G42Point::operator += (const G42Size & size)
+{
+	return Offset(size.Width, size.Height);
+}
+/*-----------------------------------------------------------------------------
+	Function - operator -=
+	Parameters:
+		const G42Size & size - The amount to offset expressed as a size.
+	Description:
+		Moves this point by the offset
+-----------------------------------------------------------------------------*/
+inline G42Point &
+G42Point::operator -= (const G42Size & size)
+{
+	return Offset(-size.Width, -size.Height);
+}
+/*-----------------------------------------------------------------------------
+	Function - Set
+	Parameters:
+		int32 x
+		int32 y
+		Description:
+		Explicitly set the coordinates of the point.
+-----------------------------------------------------------------------------*/
+inline void
+G42Point::Set (int32 x, int32 y)
+{
+	X = x;
+	Y = y;
+}
+/*-----------------------------------------------------------------------------
+	G42Rect inline functions:
+-----------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------
+	Function - Set
+	Parameters:
+		int32 left,
+		int32 top,
+		int32 right,
+		int32 bottom - The left, top, right and bottom sides of a rectangle.
+	Description:
+		Explicitly set all of the coordinates of the rectangle.
+-----------------------------------------------------------------------------*/
+inline void
+G42Rect::Set (int32 left, int32 top, int32 right, int32 bottom)
+{
+	Left = left;
+	Top = top;
+	Right = right;
+	Bottom = bottom;
+}
+/*-----------------------------------------------------------------------------
+	Function - G42Rect constructor
+	Description:
+		Default constructor which does nothing
+-----------------------------------------------------------------------------*/
+inline
+G42Rect::G42Rect (void)
+{
+}
+/*-----------------------------------------------------------------------------
+	Function - G42Rect constructor
+	Parameters:
+		int32 left,
+		int32 top,
+		int32 right,
+		int32 bottom - left, top, right and bottom side of a rectangle
+	Description:
+		Constructor that sets all the values explicitly.
+-----------------------------------------------------------------------------*/
+inline
+G42Rect::G42Rect(int32 left, int32 top, int32 right, int32 bottom)
+{
+	Set(left, top, right, bottom);
+}
+/*-----------------------------------------------------------------------------
+	Function - G42Rect constructor
+	Parameters:
+		const G42Rect & ref - the G42Rect being duplicated
+	Description:
+		Copy constructor
+-----------------------------------------------------------------------------*/
+inline
+G42Rect::G42Rect (const G42Rect & ref)
+{
+	Set(ref.Left, ref.Top, ref.Right, ref.Bottom);
+}
+/*-----------------------------------------------------------------------------
+	Function - G42Rect constructor
+	Parameters:
+		const G42Point & topLeft		- the top left point of a rectangle
+		const G42Point & bottomRight	- the bottom right point of a rectangle
+	Description:
+		Determine a rectangle given two points.
+-----------------------------------------------------------------------------*/
+inline
+G42Rect::G42Rect (const G42Point & topLeft, const G42Point & bottomRight)
+{
+  Set(topLeft.X, topLeft.Y, bottomRight.X, bottomRight.Y);
+}
+/*-----------------------------------------------------------------------------
+	Function - G42Rect constructor
+	Parameters:
+		const G42Point & origin	- the top left point of a rectangle
+		const G42Size & extent	- the heigth and width of a rectangle
+	Description:
+		Determine a rectangle given its upper left point and a dimension.
+-----------------------------------------------------------------------------*/
+inline
+G42Rect::G42Rect (const G42Point & origin, const G42Size & extent)
+{
+  Set(origin.X, origin.Y, origin.X + extent.Width - 1, origin.Y + extent.Height - 1);
+}
+#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)
+/*-----------------------------------------------------------------------------
+	Function - G42Rect constructor
+	Parameters:
+		const tagRECT far & rect - a Windows tagRECT rectangle
+	Description:
+		Constructor to create a G42Rect from a Windows tagRECT
+-----------------------------------------------------------------------------*/
+inline
+G42Rect::G42Rect (const tagRECT far & rect)
+{
+	Set(rect.left, rect.top, rect.right - 1, rect.bottom - 1);
+}
+#endif
+#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)
+/*-----------------------------------------------------------------------------
+	Function - G42Rect constructor
+	Parameters:
+		const TRect & rect - a Borland TRect rectangle
+	Description:
+		Constructor to create a G42Rect from a Borland TRect
+-----------------------------------------------------------------------------*/
+inline
+G42Rect::G42Rect (const TRect & rect)
+{
+	Set(rect.left, rect.top, rect.right - 1, rect.bottom - 1);
+}
+#endif
+#if defined(MACOS)
+/*-----------------------------------------------------------------------------
+	Function - G42Rect constructor for Macintosh
+	Parameters:
+		const Rect & rect - a Macintosh rectangle
+	Description:
+		Constructor to create a G42Rect from a Mac Rect structure
+-----------------------------------------------------------------------------*/
+inline
+G42Rect::G42Rect (const Rect & rect)
+{
+	Set(rect.left, rect.top, rect.right, rect.bottom);
+}
+#endif
+/*-----------------------------------------------------------------------------
+	Function - operator const G42Point *
+	Description:
+		Return an array of two points (upperleft and bottomright)
+-----------------------------------------------------------------------------*/
+inline
+G42Rect::operator const G42Point * (void) const
+{
+  return (const G42Point *)this;
+}
+/*-----------------------------------------------------------------------------
+	Function - operator G42Point *
+	Description:
+		Return an array of two points (upperleft and bottomright)
+-----------------------------------------------------------------------------*/
+inline
+G42Rect::operator G42Point * (void)
+{
+  return (G42Point *)this;
+}
+#if defined(__BORLANDC__) && defined(WINSYS_GEOMETRY_H)
+/*-----------------------------------------------------------------------------
+	Function - operator TRect
+	Description:
+		Conversion operator to convert G42Rect to a Borland TRect
+-----------------------------------------------------------------------------*/
+inline
+G42Rect::operator TRect (void) const
+{
+	return TRect(Left, Top, Right + 1, Bottom + 1);
+}
+#endif
+#if defined(__WINDOWS_H) || defined(_WINDOWS_) || defined(_INC_WINDOWS)
+/*-----------------------------------------------------------------------------
+	Function - operator tagRECT
+	Description:
+		Conversion operator to convert G42Rect to a Windows tagRECT
+-----------------------------------------------------------------------------*/
+inline
+G42Rect::operator tagRECT (void) const
+{
+	tagRECT rect;
+	rect.left = Left;
+	rect.top = Top;
+	rect.right = Right + 1;
+	rect.bottom = Bottom + 1;
+	return rect;
+}
+#endif
+#if defined(MACOS)
+/*-----------------------------------------------------------------------------
+	Function - operator Rect for Macintosh
+	Description:
+		Conversion operator to convert G42Rect to a Mac Rect structure
+-----------------------------------------------------------------------------*/
+inline
+G42Rect::operator Rect (void) const
+{
+	Rect rect;
+	::SetRect (&rect, Left, Top, Right, Bottom);
+	return rect;
+}
+#endif
+/*-----------------------------------------------------------------------------
+	Function - SetNull
+	Description:
+		Set all the data members to 0.
+-----------------------------------------------------------------------------*/
+inline void
+G42Rect::SetNull (void)
+{
+	Left = 0;
+	Top = 0;
+	Right = -1;
+	Bottom = -1;
+}
+/*-----------------------------------------------------------------------------
+	Function - SetEmpty
+	Description:
+		Create an empty rectangle.
+-----------------------------------------------------------------------------*/
+inline void
+G42Rect::SetEmpty (void)
+{
+	SetNull();
+}
+/*-----------------------------------------------------------------------------
+	Function - SetWH
+	Parameters:
+		int32 left,
+		int32 top		- The left and top sides of a rectangle.
+		int32 width,
+		int32 height	- The width and height of a rectangle.
+	Description:
+		Set the parameters based on the left, top, width and height
+-----------------------------------------------------------------------------*/
+inline void
+G42Rect::SetWH (int32 left, int32 top, int32 width, int32 height)
+{
+	Left = left;
+	Top = top;
+	Right = left + width - 1;
+	Bottom = top + height - 1;
+}
+/*-----------------------------------------------------------------------------
+	Function - IsEmpty
+	Description:
+		Return true if the rectangle is empty.  Really, returns true on
+		width or height zero or negitive.
+-----------------------------------------------------------------------------*/
+inline bool
+G42Rect::IsEmpty (void) const
+{
+  return (Left > Right || Top > Bottom);
+}
+/*-----------------------------------------------------------------------------
+	Function - IsNull
+	Description:
+		Return true if rectangle is 0 width and height at 0, 0
+-----------------------------------------------------------------------------*/
+inline bool
+G42Rect::IsNull (void) const
+{
+  return (!Left && !Right && Top == -1 && Bottom == -1);
+}
+/*-----------------------------------------------------------------------------
+	Function - operator ==
+	Description:
+		Return true if the points defining both rectangles are identical.
+-----------------------------------------------------------------------------*/
+inline bool
+G42Rect::operator == (const G42Rect & other) const
+{
+	return (Left == other.Left && Top == other.Top &&
+		Right == other.Right && Bottom == other.Bottom);
+}
+/*-----------------------------------------------------------------------------
+	Function - operator !=
+	Description:
+		Returns the opposite of operator ==.
+-----------------------------------------------------------------------------*/
+inline bool
+G42Rect::operator != (const G42Rect & other) const
+{
+	return (!(other == *this));
+}
+/*-----------------------------------------------------------------------------
+	Function - operator =
+	Parameters:
+		const G42Rect & other - The rectangle used to set the coordinates.
+	Description:
+		Assigns the coordinates of other to this rectangle
+-----------------------------------------------------------------------------*/
+inline G42Rect &
+G42Rect::operator = (const G42Rect & other)
+{
+	Left = other.Left;
+	Top = other.Top;
+	Right = other.Right;
+	Bottom = other.Bottom;
+	return *this;
+}
+/*-----------------------------------------------------------------------------
+	Function - GetLeft
+	Description:
+		Return the Left value.
+-----------------------------------------------------------------------------*/
+inline int32
+G42Rect::GetLeft (void) const
+{
+	return Left;
+}
+/*-----------------------------------------------------------------------------
+	Function - GetTop
+	Description:
+		Return the Top value.
+-----------------------------------------------------------------------------*/
+inline int32
+G42Rect::GetTop (void) const
+{
+	return Top;
+}
+/*-----------------------------------------------------------------------------
+	Function - GetRight
+	Description:
+		Return the Right value.
+-----------------------------------------------------------------------------*/
+inline int32
+G42Rect::GetRight (void) const
+{
+	return Right;
+}
+/*-----------------------------------------------------------------------------
+	Function - GetBottom
+	Description:
+		Return the Bottom value.
+-----------------------------------------------------------------------------*/
+inline int32
+G42Rect::GetBottom (void) const
+{
+	return Bottom;
+}
+/*-----------------------------------------------------------------------------
+	Function - GetTopLeft
+	Description:
+		Return the upperleft point.
+-----------------------------------------------------------------------------*/
+inline G42Point
+G42Rect::GetTopLeft (void) const
+{
+	return G42Point(Left, Top);
+}
+/*-----------------------------------------------------------------------------
+	Function - GetTopRight
+	Description:
+		Return the upperright point.
+-----------------------------------------------------------------------------*/
+inline G42Point
+G42Rect::GetTopRight (void) const
+{
+	return G42Point(Right, Top);
+}
+/*-----------------------------------------------------------------------------
+	Function - GetBottomLeft
+	Description:
+		Return the lowerleft point.
+-----------------------------------------------------------------------------*/
+inline G42Point
+G42Rect::GetBottomLeft (void) const
+{
+	return G42Point(Left, Bottom);
+}
+/*-----------------------------------------------------------------------------
+	Function - GetBottomRight
+	Description:
+		Return the lowerright point.
+-----------------------------------------------------------------------------*/
+inline G42Point
+G42Rect::GetBottomRight (void) const
+{
+	return G42Point(Right, Bottom);
+}
+/*-----------------------------------------------------------------------------
+	Function - GetWidth
+	Description:
+		Return the width of the rectangle.
+-----------------------------------------------------------------------------*/
+inline int32
+G42Rect::GetWidth (void) const
+{
+	return Right - Left + 1;
+}
+/*-----------------------------------------------------------------------------
+	Function - GetWidthAbs
+	Description:
+		Return the normalized width of the rectangle.
+-----------------------------------------------------------------------------*/
+inline int32
+G42Rect::GetWidthAbs (void) const
+{
+	if (Right < Left)
+		return Left - Right - 1;
+	else
+		return GetWidth();
+}
+/*-----------------------------------------------------------------------------
+	Function - GetHeight
+	Description:
+		Return the height of the rectangle.
+-----------------------------------------------------------------------------*/
+inline int32
+G42Rect::GetHeight (void) const
+{
+	return Bottom - Top + 1;
+}
+/*-----------------------------------------------------------------------------
+	Function - GetHeightAbs
+	Description:
+		Return the normalized height of the rectangle.
+-----------------------------------------------------------------------------*/
+inline int32
+G42Rect::GetHeightAbs (void) const
+{
+	if (Bottom < Top)
+		return Top - Bottom - 1;
+	else
+		return GetHeight();
+}
+/*-----------------------------------------------------------------------------
+	Function - GetSize
+	Description:
+		Return the size of the rectangle.
+-----------------------------------------------------------------------------*/
+inline G42Size
+G42Rect::GetSize (void) const
+{
+	return G42Size(GetWidth(), GetHeight());
+}
+/*-----------------------------------------------------------------------------
+	Function - GetArea
+	Description:
+		Return the area of the rectangle.
+-----------------------------------------------------------------------------*/
+inline int32
+G42Rect::GetArea (void) const
+{
+	return (GetWidth() * GetHeight());
+}
+/*-----------------------------------------------------------------------------
+	Function - Contains
+	Parameters:
+		const G42Point & point - The point to check.
+	Description:
+		Return true if the rectangle contains the point.
+-----------------------------------------------------------------------------*/
+inline bool
+G42Rect::Contains (const G42Point & point) const
+{
+	return (point.X >= Left && point.X <= Right &&
+		point.Y >= Top && point.Y <= Bottom);
+}
+/*-----------------------------------------------------------------------------
+	Function - Contains
+	Parameters:
+		const G42Rect & other - The rectangle to check.
+	Description:
+		Return true if the rectangle completely surrounds the other.
+-----------------------------------------------------------------------------*/
+inline bool
+G42Rect::Contains (const G42Rect & other) const
+{
+	return (other.Left >= Left && other.Right <= Right &&
+		other.Top >= Top && other.Bottom <= Bottom);
+}
+/*-----------------------------------------------------------------------------
+	Function - Touches
+	Parameters:
+		const G42Rect & other - The rectangle to check.
+	Description:
+		Return true if the intersection of two rectangles is not NULL.
+-----------------------------------------------------------------------------*/
+inline bool
+G42Rect::Touches (const G42Rect & other) const
+{
+	return (other.Right > Left && other.Left < Right
+		&& other.Bottom > Top && other.Top < Bottom);
+}
+/*-----------------------------------------------------------------------------
+	Function - OffsetBy
+	Parameters:
+		int32 dx,
+		int32 dy - The x and y offset to move the rectangle.
+	Description:
+		Move the points of the rectangle by the offsets.
+-----------------------------------------------------------------------------*/
+inline G42Rect
+G42Rect::OffsetBy (int32 dx, int32 dy) const
+{
+	return G42Rect(Left + dx, Top + dy, Right + dx, Bottom + dy);
+}
+/*-----------------------------------------------------------------------------
+	Function - operator +
+	Parameters:
+		const G42Size & size - The offset expressed as a height and width.
+	Description:
+		Move the points of the rectangle by the offset.
+-----------------------------------------------------------------------------*/
+inline G42Rect
+G42Rect::operator + (const G42Size & size) const
+{
+	return OffsetBy(size.Width, size.Height);
+}
+/*-----------------------------------------------------------------------------
+	Function - operator -
+	Parameters:
+		const G42Size & size - The offset expressed as a height and width.
+	Description:
+		Move the points of the rectangle negatively by the offset.
+-----------------------------------------------------------------------------*/
+inline G42Rect
+G42Rect::operator - (const G42Size & size) const
+{
+	return OffsetBy(-size.Width, -size.Height);
+}
+/*-----------------------------------------------------------------------------
+	Function - MovedTo
+	Parameters:
+		int32 x,
+		int32 y - The point where the upper left will be moved.
+	Description:
+		Move the upper left point of the rectangle while maintaining the
+		current dimension.
+-----------------------------------------------------------------------------*/
+inline G42Rect
+G42Rect::MovedTo (int32 x, int32 y) const
+{
+  return G42Rect(x, y, x + GetWidth() - 1, y + GetHeight() - 1);
+}
+/*-----------------------------------------------------------------------------
+	Function - InflatedBy
+	Parameters:
+		int32 dx - The amount added to the left and right sides of the rectangle.
+		int32 dy - The amount added to the top and bottom sides of the rectangle.
+	Description:
+		Inflate the size of the rectangle.
+-----------------------------------------------------------------------------*/
+inline G42Rect
+G42Rect::InflatedBy (int32 dx, int32 dy) const
+{
+	return G42Rect(Left - dx, Top - dy, Right + dx, Bottom + dy);
+}
+/*-----------------------------------------------------------------------------
+	Function - InflatedBy
+	Parameters:
+		const G42Size & size -	The amount added to the sides of the rectangle
+										as expressed as a height and width.
+	Description:
+		Inflate the size of the rectangle.
+-----------------------------------------------------------------------------*/
+inline G42Rect
+G42Rect::InflatedBy (const G42Size & size) const
+{
+	return G42Rect(Left - size.Width, Top - size.Height, Right + size.Width,
+		Bottom + size.Height);
+}
+/*-----------------------------------------------------------------------------
+	Function - Normalized
+	Description:
+		Normalize the rectangle, such that left is less than right and top is
+		less than bottom.
+-----------------------------------------------------------------------------*/
+inline G42Rect
+G42Rect::Normalized (void) const
+{
+	int32 left, right, top, bottom;
+	if (Right < Left)
+	{
+		left = Right + 1;
+		right = Left - 1;
+	}
+	else
+	{
+		left = Left;
+		right = Right;
+	}
+	if (Bottom < Top)
+	{
+		top = Bottom + 1;
+		bottom = Top - 1;
+	}
+	else
+	{
+		top = Top;
+		bottom = Bottom;
+	}
+	return G42Rect(left, top, right, bottom);
+}
+/*-----------------------------------------------------------------------------
+	Function - operator &
+	Parameters:
+		const G42Rect & other - The rectangle to intersect with.
+	Description:
+		Return the intersection of two rectangles.
+-----------------------------------------------------------------------------*/
+inline G42Rect
+G42Rect::operator &(const G42Rect & other) const
+{
+	if (Touches(other))
+		return G42Rect(max(Left, other.Left), max(Top, other.Top),
+			min(Right, other.Right), min(Bottom, other.Bottom));
+  return G42Rect(0, 0, 0, 0);
+}
+/*-----------------------------------------------------------------------------
+	Function - operator |
+	Parameters:
+		const G42Rect & other - The rectangle to union with.
+	Description:
+		Return the union of two rectangles.
+-----------------------------------------------------------------------------*/
+inline G42Rect
+G42Rect::operator |(const G42Rect & other) const
+{
+	return G42Rect(min(Left, other.Left), min(Top, other.Top),
+		max(Right, other.Right), max(Bottom, other.Bottom));
+}
+/*-----------------------------------------------------------------------------
+	Function - subtract
+	Parameters:
+		const G42Rect& other	- 	The rectangle to subtract.
+		G42Rect result[]		- 	An array that will contain the resulting
+										rectangles after the subtraction.
+	Description:
+		Determines the parts of this rect that do not lie within "other".
+		Returns the resulting number of rectangles which will be in the
+		range "0 .. 4" inclusive.  Resulting rectangles are placed in the
+		"result" array.
+-----------------------------------------------------------------------------*/
+inline int32
+G42Rect::Subtract (const G42Rect& other, G42Rect result[]) const
+{
+	// Case of non-intersection, result is just this rectangle
+	//
+	if (!Touches(other))
+	{
+		result[0] = *this;
+		return 1;
+	}
+	// Check for up to four sub-rectangles produced
+	//
+	int  i = 0;
+	// Top piece of this rect
+	//
+	if (other.Top > Top)
+	{
+		result[i].Left = Left;
+		result[i].Top = Top;
+		result[i].Right = Right;
+		result[i].Bottom = other.Top;
+		i++;
+	}
+	// Bottom piece of this rect
+	//
+	if (other.Bottom < Bottom)
+	{
+		result[i].Left = Left;
+		result[i].Top = other.Bottom;
+		result[i].Right = Right;
+		result[i].Bottom = Bottom;
+		i++;
+	}
+	// Left piece of this rect
+	//
+	if (other.Left > Left)
+	{
+		result[i].Left = Left;
+		result[i].Top = max(Top, other.Top);
+		result[i].Right = other.Left;
+		result[i].Bottom = min(Bottom, other.Bottom);
+		i++;
+	}
+	// Right piece of this rect
+	//
+	if (other.Right < Right)
+	{
+		result[i].Left = other.Right;
+		result[i].Top = max(Top, other.Top);
+		result[i].Right = Right;
+		result[i].Bottom = min(Bottom, other.Bottom);
+		i++;
+	}
+	return i;
+}
+/*-----------------------------------------------------------------------------
+	Function - Normalize
+	Description:
+		Normalize the rectangle so that left is less than right and top is less
+		than bottom.
+-----------------------------------------------------------------------------*/
+inline G42Rect &
+G42Rect::Normalize (void)
+{
+	if (Right < Left)
+	{
+		int32 temp = Left;
+		Left = Right + 1;
+		Right = temp - 1;
+	}
+	if (Bottom < Top)
+	{
+		int32 temp = Top;
+		Top = Bottom + 1;
+		Bottom = temp - 1;
+	}
+	return *this;
+}
+/*-----------------------------------------------------------------------------
+	Function - Offset
+	Parameters:
+		int32 dx,
+		int32 dy - The x and y offsets.
+	Description:
+		Move the points of the rectangle by the offsets.
+-----------------------------------------------------------------------------*/
+inline G42Rect &
+G42Rect::Offset (int32 dx, int32 dy)
+{
+	Left += dx;
+	Top += dy;
+	Right += dx;
+	Bottom += dy;
+	return *this;
+}
+/*-----------------------------------------------------------------------------
+	Function - operator +=
+	Parameters:
+		const G42Size & delta - The offset expressed as width and height.
+	Description:
+		Increases the width and height of this rectangle
+-----------------------------------------------------------------------------*/
+inline G42Rect &
+G42Rect::operator += (const G42Size & delta)
+{
+	Offset(delta.Width, delta.Height);
+	return *this;
+}
+/*-----------------------------------------------------------------------------
+	Function - operator -=
+	Parameters:
+		const G42Size & delta - The offset expressed as width and height.
+	Description:
+		Move the points of the rectangle negatively by the offset.
+-----------------------------------------------------------------------------*/
+inline G42Rect &
+G42Rect::operator -= (const G42Size & delta)
+{
+	Offset(-delta.Width, -delta.Height);
+	return *this;
+}
+/*-----------------------------------------------------------------------------
+	Function - MoveTo
+	Parameters:
+		int32 x,
+		int32 y - The point where the upper left will be moved.
+	Description:
+		Moves the left and top points to the new location while maintaining the
+		width and height
+-----------------------------------------------------------------------------*/
+inline G42Rect &
+G42Rect::MoveTo (int32 x, int32 y)
+{
+	Right = x + GetWidth() - 1;
+	Bottom = y + GetHeight() - 1;
+	Left = x;
+	Top = y;
+	return *this;
+}
+/*-----------------------------------------------------------------------------
+	Function - Inflate
+	Parameters:
+		int32 dx - The amount added to the left and right sides of the rectangle.
+		int32 dy - The amount added to the top and bottom sides of the rectangle.
+	Description:
+		Increases/decreases the size of this rectangle
+-----------------------------------------------------------------------------*/
+inline G42Rect &
+G42Rect::Inflate (int32 dx, int32 dy)
+{
+	Left -= dx;
+	Top -= dy;
+	Right += dx;
+	Bottom += dy;
+	return *this;
+}
+/*-----------------------------------------------------------------------------
+	Function - Inflate
+	Parameters:
+		const G42Size & delta -	The amount added to the sides of the rectangle
+										as expressed as a height and width.
+	Description:
+		Increases/decreases the size of this rectangle
+-----------------------------------------------------------------------------*/
+inline G42Rect &
+G42Rect::Inflate (const G42Size & delta)
+{
+	return Inflate(delta.Width, delta.Height);
+}
+/*-----------------------------------------------------------------------------
+	Function - operator &=
+	Parameters:
+		const G42Rect & other -	The rectangle to intersect with.
+	Description:
+		Return the largest rectangle that is common to both rectangles.
+-----------------------------------------------------------------------------*/
+inline G42Rect &
+G42Rect::operator &= (const G42Rect & other)
+{
+	if (!IsNull())
+	{
+		if (other.IsNull())
+			SetNull();
+		else
+		{
+			Left = max(Left, other.Left);
+			Top = max(Top, other.Top);
+			Right = min(Right, other.Right);
+			Bottom = min(Bottom, other.Bottom);
+		}
+	}
+	return *this;
+}
+/*-----------------------------------------------------------------------------
+	Function - operator |=
+	Parameters:
+		const G42Rect & other -	The rectangle to union with.
+	Description:
+		Return the smallest rectangle that contains both rectangles.
+-----------------------------------------------------------------------------*/
+inline G42Rect &
+G42Rect::operator |= (const G42Rect & other)
+{
+	if (!other.IsNull())
+	{
+		if (IsNull())
+			*this = other;
+		else
+		{
+			Left = min(Left, other.Left);
+			Top = min(Top, other.Top);
+			Right = max(Right, other.Right);
+			Bottom = max(Bottom, other.Bottom);
+		}
+	}
+	return *this;
+}
+/*-----------------------------------------------------------------------------
+	Function - MakeProportional
+	Parameters:
+		
+	Description: Resize the rectangle to 1.0 aspect
+	Warning:  	 Normalizes the rectangle
+-----------------------------------------------------------------------------*/
+inline 
+G42Rect &
+G42Rect::MakeProportional (G42RectCorner corner)
+{
+	//  Have to normalize because of the meaning of corners
+	Normalize();
+	int32 width  = Right - Left;
+	int32 height = Bottom - Top;
+	if (width && height)
+	{
+		int32 adj_x = 0, adj_y = 0;
+		/*  Calculate adjustment  */
+		if (width > height) 
+		{
+			adj_x = height - width;
+		}
+		else 
+		{
+			adj_y = width - height;
+		}							
+		
+		if (corner == G42Rect::TopLeft)
+		{
+			Top  -= adj_y;
+			Left -= adj_x;
+		}
+		else if (corner == G42Rect::TopRight)
+		{
+			Top   -= adj_y;
+			Right += adj_x;
+		}
+		else if (corner == G42Rect::BottomLeft)
+		{
+			Bottom += adj_y;
+			Left   -= adj_x;
+		}
+		else	// Must be BottomRight
+		{
+			Bottom += adj_y;
+			Right  += adj_x;
+		}
+	}
+	return *this;
+}
+/*-----------------------------------------------------------------------------
+	Function - ResizeProportional
+	Parameters:
+		aspect_ratio		The ratio (height / width) of the desired rectangle
+		change				The side or corner to move to achieve the aspect ratio
+	Description: Adjusts a retangle to the given aspect ratio
+	Warning:  	 Normalizes the rectangle
+-----------------------------------------------------------------------------*/
+inline
+G42Rect &
+G42Rect::ResizeProportional (double aspect_ratio, uintf change)
+{
+	//  Have to normalize because of the meaning of corners
+	Normalize();
+	if (change == G42RectChangeLeft || change == G42RectChangeRight ||
+		change == G42RectChangeWidth)
+	{
+		int32 offset = GetWidth() -
+			(int32)((double)GetHeight() / aspect_ratio + 0.5);
+		if (change == G42RectChangeLeft)
+		{
+			Left += offset;
+		}
+		else if (change == G42RectChangeRight)
+		{
+			Right -= offset;
+		}
+		else
+		{
+			Left += (offset >> 1);
+			Right -= offset - (offset >> 1);
+		}
+	}
+	else if (change == G42RectChangeTop || change == G42RectChangeBottom ||
+		change == G42RectChangeHeight)
+	{
+		int32 offset = GetHeight() -
+			(int32)((double)GetWidth() * aspect_ratio + 0.5);
+		if (change == G42RectChangeTop)
+		{
+			Top += offset;
+		}
+		else if (change == G42RectChangeBottom)
+		{
+			Bottom -= offset;
+		}
+		else
+		{
+			Top += (offset >> 1);
+			Bottom -= offset - (offset >> 1);
+		}
+	}
+	else // one of the corners
+	{
+		int32 y_offset = (int32)((double)GetWidth() * aspect_ratio + 0.5) -
+			GetHeight();
+		if (y_offset > 0)
+		{
+			if (change & G42RectChangeTop)
+			{
+				Top -= y_offset;
+			}
+			else
+			{
+				Bottom += y_offset;
+			}
+		}
+		else
+		{
+			int32 x_offset = (int32)((double)GetHeight() / aspect_ratio + 0.5) -
+				GetWidth();
+			if (change & G42RectChangeLeft)
+			{
+				Left -= x_offset;
+			}
+			else
+			{
+				Right += x_offset;
+			}
+		}
+	}
+	return *this;
+}
+// Do not add anything past this line
+#endif //GGEOMTRY_H Sentry

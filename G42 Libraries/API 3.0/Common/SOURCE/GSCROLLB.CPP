@@ -1,6 +1,5 @@
 // gscrollb.cpp - controls a windows scrollbar
 #include "gscrollb.h"
-
 #ifdef MSWIN
 /*--------------------------------------------------------------------------
 	G42ScrollBar Constructor
@@ -19,7 +18,6 @@ G42ScrollBar::G42ScrollBar(HWND par_win, G42BarType bar_type) :
 	Parent = par_win;
 	BarType = bar_type;
 }
-
 /*--------------------------------------------------------------------------
 	G42ScrollBar Destructor
 	Destroys the object and any child objects
@@ -27,7 +25,6 @@ G42ScrollBar::G42ScrollBar(HWND par_win, G42BarType bar_type) :
 G42ScrollBar::~G42ScrollBar(void)
 {
 }
-
 /*--------------------------------------------------------------------------
 	G42ScrollBar SetCurrentPos
 	Allows the G42ScrollBar object owner to set the scroll bar thumb at any
@@ -38,11 +35,9 @@ G42ScrollBar::~G42ScrollBar(void)
 void
 G42ScrollBar::SetCurrentPos(intf current_pos)
 {
-
 	CurrentPos = current_pos;
 	SetScrollPos(Parent, BarType, CurrentPos + NegativeOffset, true);
 }
-
 /*--------------------------------------------------------------------------
 	G42ScrollBar SetInitPos
 	Allows the G42ScrollBar object owner to set the inital defaults for the
@@ -71,7 +66,6 @@ G42ScrollBar::SetInitPos(intf min_pos, intf max_pos, intf current_pos,
 		MaxPos + NegativeOffset, false);
 	SetScrollPos(Parent, BarType, CurrentPos + NegativeOffset, true);
 }
-
 /*--------------------------------------------------------------------------
 	G42ScrollBar ProcessScrollMsg
 	Processes the Scroll messages from the owner object.  Moves the thumb
@@ -146,7 +140,6 @@ G42ScrollBar::ProcessScrollMsg(uintf code, uintf true_thumb_pos)
 		ScrollWindowEx(Parent, dx, dy, 0, 0, 0, 0, SW_INVALIDATE);
 	}
 }
-
 void
 G42ScrollBar::EnableScrollBar(bool enable)
 {
@@ -156,13 +149,10 @@ G42ScrollBar::EnableScrollBar(bool enable)
 		::EnableScrollBar(Parent, BarType, ESB_DISABLE_BOTH);
 	Active = enable;
 }
-
 void
 G42ScrollBar::ShowScrollBar(bool show)
 {
 	::ShowScrollBar(Parent, BarType, show);
 	Visible = show;
 }
-
 #endif // MSWIN
-

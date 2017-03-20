@@ -1,11 +1,9 @@
 #if !defined(G42DDE_H)
 #define G42DDE_H
-
 #include "gtype.h"
 #define STRICT
 #include <windows.h>
 #include <ddeml.h>
-
 class G42DDE
 {
 private:
@@ -17,7 +15,6 @@ private:
 	G42DDE(G42DDE & ref) {}
 	G42DDE & operator= (G42DDE & ref)
 		{return *this;}
-
 public:
 	G42DDE(void);
 	virtual ~G42DDE(void);
@@ -31,5 +28,4 @@ public:
 	bool OpenFiles(const char * buffer);
 	virtual void OpenReceivedFiles(const char * buffer) = 0;
 };
-
 #endif // G42DDE_H
