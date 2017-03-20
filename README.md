@@ -19,19 +19,19 @@ David also contributed to various parts of this library:
 - G42 Libraries/API 3.0/Common/SOURCE/GSWAPTST.CPP - Automated tester for Memory Manager / Swapper
 - G42 Libraries/API 3.0/Common/INCLUDE/G42SWAPPER.H - Mac OS support for Temporary Memory 
 Other Files I maintained you can look at:
-GICMGR.H:	author:			David Ison
-GICMK.H:	author:			David Ison
-GICPPSUR.H:	author:			David Ison
-GIOBELL.H:	author:			David Ison
-GIOBFREE.H:	author:			David Ison
-GIOBGRAF.H:	author:			David Ison
-GIOBPNT.H:	author:			David Ison
-GIOBPOLY.H:	author:			David Ison
-GIOBPTS.H:	author:			David Ison
-GIOBQUAD.H:	author:			David Ison
-GIOBRECT.H:	author:			David Ison
-GIPPSCRL.H:	author:			David Ison
-GMKMSG.H:	author:			David Ison
+- GICMGR.H:	author:			David Ison
+- GICMK.H:	author:			David Ison
+- GICPPSUR.H:	author:			David Ison
+- GIOBELL.H:	author:			David Ison
+- GIOBFREE.H:	author:			David Ison
+- GIOBGRAF.H:	author:			David Ison
+- GIOBPNT.H:	author:			David Ison
+- GIOBPOLY.H:	author:			David Ison
+- GIOBPTS.H:	author:			David Ison
+- GIOBQUAD.H:	author:			David Ison
+- GIOBRECT.H:	author:			David Ison
+- GIPPSCRL.H:	author:			David Ison
+- GMKMSG.H:	author:			David Ison
 
 Anything that says Mac in it was maintained by David.  There are various directories, example files, and Powerplant projects.
 
